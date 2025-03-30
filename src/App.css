@@ -1,0 +1,196 @@
+body {
+  font-family: "Arial", sans-serif;
+  margin: 0;
+}
+
+.App {
+  width: 100%;
+  text-align: center;
+}
+
+.game-frame {
+  margin: 20px;
+  height: 800px;
+  display: flex;
+  align-items: center;
+  border-radius: 8px;
+  background-color: var(--bg-1);
+}
+
+@media screen and (max-width: 768px) {
+  .game-frame {
+    height: auto;
+    flex-direction: column-reverse;
+    margin: 0;
+  }
+}
+
+.game-options {
+  width: 33%;
+  height: 100%;
+  min-width: 320px;
+  max-width: 350px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+@media screen and (max-width: 768px) {
+  .game-options {
+    width: 100%;
+  }
+}
+
+.game-options__items {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.game-history-container {
+  height: 100%;
+  padding: 12px;
+}
+
+.games-options__content {
+  width: 100%;
+  margin-top: 16px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+@media screen and (max-width: 768px) {
+  .games-options__content {
+    padding-bottom: 40px;
+  }
+}
+
+.games-options__amount {
+  width: 100%;
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border: 1px solid #f635bf;
+  border-radius: 8px;
+  padding: 4px;
+  transition: border-color 0.3s ease;
+}
+
+.games-options__content h2 {
+  color: rgb(var(--secondary) / 1);
+  font-size: 16px;
+  margin-bottom: 8px;
+}
+
+.focused {
+  border-color: rgb(var(--primary) / 1);
+}
+
+.amount-input {
+  width: 100%;
+  border: none;
+  color: rgb(var(--primary) / 1);
+  font-size: 16px;
+  text-align: center;
+  background-color: transparent;
+  flex: 1 1 0%;
+}
+
+.amount-input--auto {
+  height: 31px;
+}
+
+/* Hide the spinner for number inputs */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield; /* Firefox */
+}
+
+.amount-buttons {
+  display: flex;
+  gap: 4px;
+}
+
+.amount-btn {
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  background-color: rgb(var(--layer5));
+  color: rgb(var(--primary) / 1);
+  padding: 8px 16px;
+}
+
+.amount-btn:hover {
+  background-color: rgb(var(--layer6));
+}
+
+.game-content {
+  border-radius: 0 8px 8px 0;
+  position: relative;
+  padding: 40px;
+  gap: 60px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  /* background: url(../src/assets/bg-mines-dark.png); */
+  object-fit: cover;
+}
+
+@media screen and (max-width: 768px) {
+  .game-content {
+    gap: 20px;
+    /* padding: 20px; */
+    border-radius: 0;
+  }
+}
+
+.game-content__status {
+  position: absolute;
+  z-index: 100;
+  height: 200px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  box-sizing: border-box;
+  color: white;
+}
+
+.game-content__status__countdown {
+  margin: 10px;
+}
+
+.game-content__status__countdown span {
+  font-size: 24px;
+  font-weight: 900;
+}
+
+.game-stats {
+  padding: 12px;
+  align-self: flex-end;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.game-stats__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: rgb(var(--primary) / 1);
+}

@@ -1,0 +1,21 @@
+.tabList {
+  width: 100%;
+  display: flex;
+  padding-top: 5px;
+  border-radius: 8px 0 0 0;
+}
+
+.tab {
+  width: 50%;
+  color: #333;
+  padding: 10px 20px;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  border-bottom: 1px solid #333;
+}
+
+.tab.selected {
+  color: #fff;
+  border-bottom-color: #f635bf;
+}

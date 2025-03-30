@@ -1,0 +1,51 @@
+:root {
+  background-color: rgba(36, 36, 36, 0.9);
+}
+:root {
+  --color-primary: #000;
+  --bg-1: rgb(0, 0, 0);
+  --bg-2: rgb(35, 38, 38);
+
+  --primary: 255 255 255;
+  --primary_brand: 0 0 0;
+  --secondary: 179 190 193;
+
+  --layer1: 30 33 33;
+  --layer2: 35 38 38;
+  --layer3: 41 45 46;
+  --layer4: 50 55 56;
+  --layer5: 58 65 66;
+  --layer6: 74 83 84;
+}
+
+/* Reset default margin and padding */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+ul {
+  list-style-type: none;
+}
+
+a {
+  text-decoration: none;
+}
+
+button {
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+
+input {
+  border: none;
+  outline: none;
+}
+
+/* Set default background and text color */
+body {
+  /* background-color: var(--customGraySecond); */
+  /* color: var(--customGray); */
+}

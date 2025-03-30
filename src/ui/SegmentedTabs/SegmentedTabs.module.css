@@ -1,0 +1,31 @@
+.segmentedTabs {
+  display: flex;
+  border-radius: 10px;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.tab {
+  flex: 1;
+  padding: 8px 16px;
+  color: #ccc;
+  background-color: transparent;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.tab:hover {
+  color: #fff;
+}
+
+.active {
+  color: rgb(var(--color-primary));
+  font-weight: 800;
+  background-image: linear-gradient(90deg, rgb(238 36 184), rgb(232 113 165));
+  box-shadow:
+    rgba(35, 238, 136, 0.3) 0px 0px 12px,
+    rgb(202 29 122) 0px -2px inset;
+}
