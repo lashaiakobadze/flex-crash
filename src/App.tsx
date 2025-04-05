@@ -8,6 +8,7 @@ import GameOptionsTab, {
 import Button from "./ui/Button";
 import CrashCanvas from "./components/Crash/CrashCanvas";
 import BetHistory from "./components/BetHistory/BetHistory";
+import { Bet, Win } from "./models";
 
 // Constants
 const PING_INTERVAL = 8000;
@@ -32,12 +33,41 @@ enum GameStatus {
 function App() {
   const isMounted = useRef(false);
   const [gameMode, setGameMode] = useState<GameOptions>(GameOptions.MANUAL);
+  const [dimensions, setDimensions] = useState({ width: 420, height: 320 });
 
   const [amount, setAmount] = useState<number>(5);
   const [isAmountInputFocused, setIsAmountInputFocused] = useState(false);
   const [cashOut, setCashOut] = useState<string>("");
-  const [isCashOutAmountInputFocused, setIsCashOutAmountInputFocused] =
-    useState(false);
+  const [winSate, setWinState] = useState<{status: string, data: Win}>({ status: "", data: new Win(0, "", "", 0, 0, 0) });
+  const [betState, setBetState] = useState<{ status: string, bet: Bet }>({ status: "", bet: new Bet(0, "", "", 0, 0) });
+  const [isCashOutAmountInputFocused, setIsCashOutAmountInputFocused] = useState(false);
+  
+    useEffect(() => {
+      const handleResize = () => {
+      if (window.innerWidth < 420) {
+        setDimensions({
+          width: window.innerWidth * 0.9,
+          height: window.innerWidth * (3 / 4),
+        });
+      } else {
+        setDimensions({
+          width: window.innerWidth * 0.5,
+          height: window.innerWidth * 0.5 * (3 / 4), 
+        });
+      }
+    };
+
+    // Set initial dimensions
+    handleResize();
+
+    // Optionally, add event listener for window resize
+    window.addEventListener('resize', handleResize);
+
+    // Cleanup event listener on component unmount
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
 
   // FUNCTIONS
   const saveGameState = () => {
@@ -118,7 +148,7 @@ function App() {
   const countdownStartedRef = useRef<boolean>(false);
 
   // const WS_URL = `ws://localhost:5000/connect?user_id=${uid}`;
-  const WS_URL = "ws://173.212.232.122/connect?user_id=" + uid;
+  const WS_URL = "ws://173.212.232.122/connect?is_dev=true&user_id=" + uid;
 
   // WebSocket connection management
   const connectWebSocket = () => {
@@ -153,7 +183,7 @@ function App() {
     wsRef.current.onclose = (event: CloseEvent) => {
       console.warn(`WebSocket closed: ${event.code}`);
       clearTimeout(pingTimeoutRef.current);
-      reconnectWebSocket();
+      // reconnectWebSocket();
     };
 
     wsRef.current.onerror = (error: Event) => {
@@ -165,6 +195,8 @@ function App() {
   const handleWebSocketMessage = (decodedData: WebSocketMessage) => {
     // Ping response (measure latency)
     if (decodedData["t"] === PING_BYTE) {
+      console.log("PING response (measure latency)", decodedData);
+
       const now = Date.now();
       setLatency((now - decodedData["x"]) / 2);
       return;
@@ -172,6 +204,8 @@ function App() {
 
     // Bet placed (only to user)
     if (decodedData["t"] === 2) {
+      console.log("Bet placed  (only to user)", decodedData);
+
       const userId = parseInt(decodedData["u"]);
       const amount = parseInt(decodedData["a"]);
       const currency = decodedData["c"];
@@ -181,6 +215,8 @@ function App() {
 
     // Bet not placed (only to user)
     if (decodedData["t"] === 4) {
+      console.log("Bet not placed (only to user)", decodedData);
+
       const userId = parseInt(decodedData["u"]);
       const amount = parseInt(decodedData["a"]);
       const currency = decodedData["c"];
@@ -190,27 +226,37 @@ function App() {
 
     // Bet placed (broadcast to all)
     if (decodedData["t"] === 8) {
+      console.log("Bet placed", decodedData);
+
       const userId = parseInt(decodedData["u"]);
       const nickname = decodedData["n"];
       const amount = parseInt(decodedData["a"]);
       const currency = decodedData["c"];
-      console.log("Bet placed", decodedData);
+      setBetState({ status: "placed", bet: new Bet(amount, currency, nickname, 0, userId) });
       return;
     }
 
     // Player won (broadcast to all)
     if (decodedData["t"] === 10) {
+      console.log("Player won", decodedData);
+
       const userId = parseInt(decodedData["u"]);
       const nickname = decodedData["n"];
       const amount = parseInt(decodedData["a"]);
       const currency = decodedData["c"];
       const points = parseFloat(decodedData["p"]);
       console.log("Win message", decodedData);
+      setWinState({ status: "won", data: new Win(amount, currency, nickname, points, 0, userId) });
       return;
     }
 
     // Betting round starts
     if (decodedData["t"] === 18) {
+      console.log("Betting round starts", decodedData);
+
+      setBetState({ status: "", bet: new Bet(0, "", "", 0, 0) });
+      setWinState({ status: "", data: new Win(0, "", "", 0, 0, 0) });
+
       const roundId = parseInt(decodedData["r"]);
       const until = parseInt(decodedData["w"]);
       setGameProgress(roundId, GameStatus.BETTING_ROUND);
@@ -221,6 +267,10 @@ function App() {
 
     // Betting round ends
     if (decodedData["t"] === 19) {
+      console.log("Betting round ends", decodedData);
+      if (betState.status === 'placed') {
+        setBetState( () => ({ status: "placed", bet: betState.bet }) );
+      }
       const roundId = parseInt(decodedData["r"]);
       setGameProgress(roundId, GameStatus.END_BETTING_ROUND);
       betRoundEnd();
@@ -229,6 +279,8 @@ function App() {
 
     // New round created
     if (decodedData["t"] === 20) {
+      console.log("New round created", decodedData);
+
       const roundId = parseInt(decodedData["r"]);
       const hash = decodedData["h"];
       setRoundId(roundId);
@@ -240,6 +292,10 @@ function App() {
       const roundId = parseInt(decodedData["r"]);
       const points = parseFloat(decodedData["p"]);
       const sequence = parseInt(decodedData["q"]);
+      // console.log("roundId", roundId);
+      // console.log("points", points);
+      // console.log("sequence", sequence);
+
       setPoints(points);
       if (gameStatus !== GameStatus.PLAYING) {
         setGameProgress(roundId, GameStatus.PLAYING);
@@ -249,6 +305,7 @@ function App() {
 
     // Rocket exploded (broadcast to all)
     if (decodedData["t"] === 24) {
+      console.log("Rocket exploded", decodedData);
       const roundId = parseInt(decodedData["r"]);
       const points = parseFloat(decodedData["p"]);
       const sequence = parseInt(decodedData["q"]);
@@ -285,6 +342,7 @@ function App() {
         const d = { t: PING_BYTE, x: Date.now() };
         const m = msgpack.encode(d);
         wsRef.current.send(m);
+              console.log("PING", );
       }
     }, PING_INTERVAL);
   };
@@ -357,11 +415,11 @@ function App() {
       t: BET_REQUEST,
       r: roundId,
       a: isNaN(betAmount) ? 0 : betAmount,
-      c: "USD",
+      // c: "USD",
       p: isNaN(autoCashOut) ? 0 : autoCashOut,
     };
-
     console.log("BET", data);
+    
 
     const encoded = msgpack.encode(data);
     wsRef.current.send(encoded);
@@ -369,7 +427,7 @@ function App() {
 
   // Cash out handler
   const handleCashOut = () => {
-    if (roundId < 1 || !wsRef.current) return;
+    if (roundId < 1 || !wsRef.current || winSate.status === 'won') return;
 
     const data = {
       t: CASH_OUT_REQUEST,
@@ -424,7 +482,7 @@ function App() {
                 <input
                   className="amount-input"
                   value={amount}
-                  disabled={gameStatus === GameStatus.PLAYING}
+                  disabled={gameStatus === GameStatus.PLAYING  || betState.status === 'placed'}
                   onChange={handleAmountChange}
                   onFocus={() => setIsAmountInputFocused(true)}
                   onBlur={() => setIsAmountInputFocused(false)}
@@ -436,7 +494,7 @@ function App() {
                     role="button"
                     className="amount-btn"
                     onClick={() => setAmount(+amount / 2)}
-                    disabled={gameStatus === GameStatus.PLAYING}
+                    disabled={gameStatus === GameStatus.PLAYING  || betState.status === 'placed'}
                   >
                     1/2
                   </button>
@@ -444,7 +502,7 @@ function App() {
                     role="button"
                     className="amount-btn"
                     onClick={() => setAmount(+amount * 2)}
-                    disabled={gameStatus === GameStatus.PLAYING}
+                    disabled={gameStatus === GameStatus.PLAYING  || betState.status === 'placed'}
                   >
                     2x
                   </button>
@@ -452,7 +510,7 @@ function App() {
                     role="button"
                     className="amount-btn"
                     onClick={() => setAmount(+amount * 3)}
-                    disabled={gameStatus === GameStatus.PLAYING}
+                    disabled={gameStatus === GameStatus.PLAYING || betState.status === 'placed'}
                   >
                     3x
                   </button>
@@ -472,21 +530,29 @@ function App() {
                       onFocus={() => setIsCashOutAmountInputFocused(true)}
                       onBlur={() => setIsCashOutAmountInputFocused(false)}
                       placeholder="Set cash out amount"
+                      disabled={gameStatus === GameStatus.PLAYING || betState.status === 'placed'}
                     />
                   </div>
                 </>
               )}
 
               {gameStatus === GameStatus.PLAYING ? (
-                <Button
-                  onClick={handleCashOut}
-                  amount={(+points * +amount).toFixed(2)}
-                  label="Cash Out"
-                />
+                
+                  betState.status === 'placed' ? (
+                    <Button
+                      onClick={handleCashOut}
+                      amount={winSate.status === 'won' ? winSate.data.amount.toFixed(2) : (+points * +amount).toFixed(2)}
+                      label={winSate.status === 'won' ? 'You Win!' : "Cash Out"}
+                    />
+                  ) : (
+                    <Button
+                      label="Waiting next round"
+                    />
+                ) 
               ) : (
                 <Button
                   onClick={handleBet}
-                  label="Bet"
+                  label={`${betState.status === 'placed' ? 'cancel' : 'bet'}`}
                   amount={`${countdown} s`}
                 />
               )}
@@ -511,8 +577,8 @@ function App() {
           {/* <WheelRoulette newSpin={newSpin} /> */}
 
           <CrashCanvas
-            width={760}
-            height={540}
+            width={dimensions.width}
+            height={dimensions.height}
             drawCaption={gameStatus === GameStatus.PLAYING}
             points={points}
           />

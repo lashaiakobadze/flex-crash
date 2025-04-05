@@ -2,7 +2,7 @@ import React from "react";
 import styles from "./button.module.css";
 
 interface ButtonProps {
-  onClick: () => void;
+  onClick?: () => void;
   label: string;
 
   amount?: string;

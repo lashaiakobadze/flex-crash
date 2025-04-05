@@ -21,7 +21,7 @@ const CrashCanvas: React.FC<CrashCanvasProps> = ({
   const animationFrameRef = React.useRef<number | null>(null);
   const [isMounted, setIsMounted] = React.useState(false);
 
-  console.log("points in childe", points);
+  // console.log("points in childe", points);
 
   React.useEffect(() => {
     setIsMounted(true);
@@ -33,7 +33,7 @@ const CrashCanvas: React.FC<CrashCanvasProps> = ({
 
     engine.startTime = new Date().getTime();
     engine.onResize(canvas.width, canvas.height);
-    engine.state = CrashEngineState.Active;
+    engine.updateFromPoints(0); // Initialize with points
 
     const tick = () => {
       if (!canvas || !isMounted || !engineRef.current) return;
@@ -45,7 +45,7 @@ const CrashCanvas: React.FC<CrashCanvasProps> = ({
 
       ctx.clearRect(0, 0, engine.graphWidth, engine.graphHeight);
 
-      // Draw line
+      // Draw line (same as before)
       ctx.beginPath();
       ctx.strokeStyle = "#f635bf";
       ctx.lineWidth = 2;
@@ -173,6 +173,13 @@ const CrashCanvas: React.FC<CrashCanvasProps> = ({
       engine.destroy();
     };
   }, [isMounted]);
+
+    // Add effect to update engine when points change
+  React.useEffect(() => {
+    if (engineRef.current) {
+      engineRef.current.updateFromPoints(points);
+    }
+  }, [points]);
 
   const stepValues = (multiplier: number, e: number = 5, n: number = 2) => {
     for (let i = 0.4, r = 0.1; ; ) {

@@ -56,12 +56,25 @@ export class CrashEngine {
     );
   }
 
+  // public getElapsedPayout(elapsedTime: number) {
+  //   const payout =
+  //     ~~(100 * Math.pow(Math.E, CrashEngine.CrashSpeed * elapsedTime)) / 100;
+  //   if (!isFinite(payout)) {
+  //     throw new Error("Infinite payout");
+  //   }
+  //   return Math.max(payout, 1);
+  // }
+
+
+  // Modified getElapsedPayout
   public getElapsedPayout(elapsedTime: number) {
-    const payout =
-      ~~(100 * Math.pow(Math.E, CrashEngine.CrashSpeed * elapsedTime)) / 100;
-    if (!isFinite(payout)) {
-      throw new Error("Infinite payout");
+    // Use backend points when available
+    if (this.state === CrashEngineState.Active) {
+      return this.multiplier;
     }
+    
+    // Fallback to calculation when no points
+    const payout = ~~(100 * Math.pow(Math.E, CrashEngine.CrashSpeed * elapsedTime)) / 100;
     return Math.max(payout, 1);
   }
 
@@ -84,21 +97,58 @@ export class CrashEngine {
     ) as any as number;
   }
 
+    // Add currentTime tracking
+  public currentTime = 0;
+
+  public updateFromPoints(points: number | null) {
+    this.currentTime = Date.now();
+    
+    if (points === null) {
+      this.state = CrashEngineState.Loading;
+      this.multiplier = 1;
+      this.startTime = this.currentTime;
+    } else if (points === 0) {
+      this.state = CrashEngineState.Over;
+      this.multiplier = 1;
+      this.finalMultiplier = 1;
+      this.finalElapsed = this.getElapsedTime();
+    } else {
+      this.state = CrashEngineState.Active;
+      this.multiplier = points;
+    }
+    
+    this.updateAxes();
+  }
+
+  // Modified tick method
   public tick() {
     this.elapsedTime = this.getElapsedTime();
-    this.multiplier =
-      this.state !== CrashEngineState.Over
-        ? this.getElapsedPayout(this.elapsedTime)
-        : this.finalMultiplier;
+    this.updateAxes();  
+  }
+
+  private updateAxes() {
     this.yAxisMinimum = this.yAxisMultiplier;
-    this.xAxis = Math.max(
-      this.elapsedTime + this.elapsedOffset,
-      this.xAxisMinimum,
-    );
+    this.xAxis = Math.max(this.elapsedTime + this.elapsedOffset, this.xAxisMinimum);
     this.yAxis = Math.max(this.multiplier, this.yAxisMinimum);
     this.xIncrement = this.plotWidth / this.xAxis;
     this.yIncrement = this.plotHeight / this.yAxis;
   }
+
+  // public tick() {
+  //   this.elapsedTime = this.getElapsedTime();
+  //   this.multiplier =
+  //     this.state !== CrashEngineState.Over
+  //       ? this.getElapsedPayout(this.elapsedTime)
+  //       : this.finalMultiplier;
+  //   this.yAxisMinimum = this.yAxisMultiplier;
+  //   this.xAxis = Math.max(
+  //     this.elapsedTime + this.elapsedOffset,
+  //     this.xAxisMinimum,
+  //   );
+  //   this.yAxis = Math.max(this.multiplier, this.yAxisMinimum);
+  //   this.xIncrement = this.plotWidth / this.xAxis;
+  //   this.yIncrement = this.plotHeight / this.yAxis;
+  // }
 
   public destroy() {
     if (this.tickTimeout) {
