@@ -1,4 +1,4 @@
-interface IBet{
+export interface IBet {
     c: string;
     t: number;
     u: number;

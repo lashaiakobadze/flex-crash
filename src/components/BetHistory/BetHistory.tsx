@@ -16,6 +16,10 @@ const BetHistory: React.FC<BetHistoryProps> = () => {
 
   const [headerType, setHeaderType] = React.useState("my");
 
+  const handleTabClick = (tab: TabType) => {
+    setActiveTab(tab);
+  };
+
   const header = [
     { type: "all", value: "All Bets" },
     { type: "my", value: "My Bets", onClick: "myBet" },
@@ -39,8 +43,8 @@ const BetHistory: React.FC<BetHistoryProps> = () => {
         ))}
       </div>
 
-      <div className="tab-content">
-        {activeTab === "all" && <AllBetsContent />}
+      <div className="tab-content" onClick={() => handleTabClick}>
+        {activeTab === "all" && <AllBetsContent  />}
         {activeTab === "my" && <MyBetsContent />}
         {activeTab === "top" && <TopBetsContent />}
       </div>

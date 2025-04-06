@@ -1,5 +1,5 @@
 import * as React from "react";
-import { CrashEngine, CrashEngineState } from "./CrashEngine";
+import { CrashEngine } from "./CrashEngine";
 
 interface CrashCanvasProps {
   width?: number;

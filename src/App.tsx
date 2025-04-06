@@ -183,7 +183,7 @@ function App() {
     wsRef.current.onclose = (event: CloseEvent) => {
       console.warn(`WebSocket closed: ${event.code}`);
       clearTimeout(pingTimeoutRef.current);
-      // reconnectWebSocket();
+      reconnectWebSocket();
     };
 
     wsRef.current.onerror = (error: Event) => {
@@ -209,6 +209,9 @@ function App() {
       const userId = parseInt(decodedData["u"]);
       const amount = parseInt(decodedData["a"]);
       const currency = decodedData["c"];
+      console.log("userId", userId);
+      console.log("amount", amount);
+      console.log("currency", currency);
       // Handle bet placed confirmation
       return;
     }
@@ -220,6 +223,9 @@ function App() {
       const userId = parseInt(decodedData["u"]);
       const amount = parseInt(decodedData["a"]);
       const currency = decodedData["c"];
+      console.log("userId", userId);
+      console.log("amount", amount);
+      console.log("currency", currency);
       // Handle bet not placed
       return;
     }
@@ -283,6 +289,7 @@ function App() {
 
       const roundId = parseInt(decodedData["r"]);
       const hash = decodedData["h"];
+      console.log("hash", hash);
       setRoundId(roundId);
       return;
     }
@@ -294,7 +301,7 @@ function App() {
       const sequence = parseInt(decodedData["q"]);
       // console.log("roundId", roundId);
       // console.log("points", points);
-      // console.log("sequence", sequence);
+      console.log("sequence", sequence);
 
       setPoints(points);
       if (gameStatus !== GameStatus.PLAYING) {
@@ -309,6 +316,9 @@ function App() {
       const roundId = parseInt(decodedData["r"]);
       const points = parseFloat(decodedData["p"]);
       const sequence = parseInt(decodedData["q"]);
+      console.log("roundId", roundId);
+      console.log("points", points);
+      console.log("sequence", sequence);
       // Handle rocket explosion
       return;
     }
