@@ -148,7 +148,7 @@ function App() {
   const countdownStartedRef = useRef<boolean>(false);
 
   // const WS_URL = `ws://localhost:5000/connect?user_id=${uid}`;
-  const WS_URL = "ws://173.212.232.122/connect?is_dev=true&user_id=" + uid;
+  const WS_URL = "ws://173.212.232.122:5000/connect?is_dev=true&user_id=" + uid;
 
   // WebSocket connection management
   const connectWebSocket = () => {
