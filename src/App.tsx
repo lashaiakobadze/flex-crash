@@ -334,6 +334,7 @@ function App() {
     if (decodedData["t"] === 28) {
       const roundId = parseInt(decodedData["r"]);
       const seconds = parseInt(decodedData["w"]);
+      console.log("seconds", seconds);
       setRoundId(roundId);
       return;
     }
