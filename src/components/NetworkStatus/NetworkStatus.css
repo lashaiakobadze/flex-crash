@@ -1,0 +1,73 @@
+/* Block */
+.network-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Arial', sans-serif;
+  font-size: 16px;
+  color: white;
+}
+
+/* Elements */
+.network-status__latency {
+  font-weight: bold;
+  min-width: 40px;
+  text-align: right;
+}
+
+.network-status__bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 14px;
+}
+
+.network-status__bar {
+  width: 4px;
+  border-radius: 2px;
+  transition: height 0.3s ease;
+}
+
+/* Bar types */
+.network-status__bar--low {
+  background-color: currentColor;
+  opacity: 0.6;
+}
+
+.network-status__bar--middle {
+  background-color: currentColor;
+  opacity: 0.8;
+}
+
+.network-status__bar--high {
+  background-color: currentColor;
+}
+
+/* Quality modifiers */
+.network-status--excellent {
+  color: #4CAF50;
+}
+
+.network-status--good {
+  color: #8BC34A;
+}
+
+.network-status--fair {
+  color: #FFC107;
+}
+
+.network-status--poor {
+  color: #F44336;
+  animation: pulse 1s infinite;
+}
+
+.network-status--disconnected {
+  color: #9E9E9E;
+}
+
+/* Animation */
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.5; }
+  100% { opacity: 1; }
+}

@@ -2,13 +2,14 @@ import { useEffect, useRef, useState } from "react";
 import * as msgpack from "msgpack-lite";
 
 import "./App.css";
-import GameOptionsTab, {
-  GameOptions,
-} from "./ui/GameOptionsTab/GameOptionsTab";
+// import GameOptionsTab, {
+//   GameOptions,
+// } from "./ui/GameOptionsTab/GameOptionsTab";
 import Button from "./ui/Button";
 import CrashCanvas from "./components/Crash/CrashCanvas";
-import BetHistory from "./components/BetHistory/BetHistory";
+// import BetHistory from "./components/BetHistory/BetHistory";
 import { Bet, Win } from "./models";
+import NetworkStatus from "./components/NetworkStatus/NetworkStatus";
 
 // Constants
 const PING_INTERVAL = 8000;
@@ -22,7 +23,7 @@ type WebSocketMessage = {
   [key: string]: any;
 };
 
-enum GameStatus {
+export enum GameStatus {
   PLAYING = "PLAYING",
   WAITING = "WAITING",
   CANCELLED = "CANCELLED",
@@ -32,26 +33,26 @@ enum GameStatus {
 
 function App() {
   const isMounted = useRef(false);
-  const [gameMode, setGameMode] = useState<GameOptions>(GameOptions.MANUAL);
+  // const [gameMode, setGameMode] = useState<GameOptions>(GameOptions.MANUAL);
   const [dimensions, setDimensions] = useState({ width: 420, height: 320 });
 
   const [amount, setAmount] = useState<number>(5);
   const [isAmountInputFocused, setIsAmountInputFocused] = useState(false);
   const [cashOut, setCashOut] = useState<string>("");
   const [winSate, setWinState] = useState<{status: string, data: Win}>({ status: "", data: new Win(0, "", "", 0, 0, 0) });
-  const [betState, setBetState] = useState<{ status: string, bet: Bet }>({ status: "", bet: new Bet(0, "", "", 0, 0) });
+  const [betState, setBetState] = useState<{ status: string, bet: Bet, roundId: number }>({ status: "", roundId: 0, bet: new Bet(0, "", "", 0, 0) });
   const [isCashOutAmountInputFocused, setIsCashOutAmountInputFocused] = useState(false);
   
     useEffect(() => {
       const handleResize = () => {
       if (window.innerWidth < 420) {
         setDimensions({
-          width: window.innerWidth * 0.9,
-          height: window.innerWidth * (3 / 4),
+          width: window.innerWidth * 0.9 ,//* 0.9,
+          height: window.innerWidth  //* (4 / 5),
         });
       } else {
         setDimensions({
-          width: window.innerWidth * 0.5,
+          width: window.innerWidth * 0.7,
           height: window.innerWidth * 0.5 * (3 / 4), 
         });
       }
@@ -75,10 +76,21 @@ function App() {
       amount,
     };
     localStorage.setItem("gameState", JSON.stringify(gameState));
+    localStorage.setItem("betState", JSON.stringify(betState));
   };
 
   const loadGameState = () => {
     const savedGameState = localStorage.getItem("gameState");
+    const savedBetState = localStorage.getItem("betState");
+    if (savedBetState) {
+      const parsedSavedBetState = JSON.parse(savedBetState);
+      console.log("roundId", roundId);
+      console.log("parsedSavedBetState.roundId", parsedSavedBetState.roundId);
+      if (roundId === parsedSavedBetState.roundId) {
+        console.log("Loading saved bet state:", parsedSavedBetState);
+        setBetState({ status: parsedSavedBetState.status, roundId: parsedSavedBetState.roundId, bet: parsedSavedBetState.bet });
+      }
+    }
     if (savedGameState) {
       const { amount } = JSON.parse(savedGameState);
       setAmount(amount);
@@ -122,7 +134,7 @@ function App() {
     } else {
       saveGameState();
     }
-  }, [amount]);
+  }, [amount, betState]);
 
   /// CRASH GAME ///
   // State
@@ -148,7 +160,7 @@ function App() {
   const countdownStartedRef = useRef<boolean>(false);
 
   // const WS_URL = `ws://localhost:5000/connect?user_id=${uid}`;
-  const WS_URL = "ws://173.212.232.122:5000/connect?is_dev=true&user_id=" + uid;
+  const WS_URL = "wss://crash.flexgaming.net/connect?is_dev=true&user_id=" + uid; // 
 
   // WebSocket connection management
   const connectWebSocket = () => {
@@ -183,7 +195,7 @@ function App() {
     wsRef.current.onclose = (event: CloseEvent) => {
       console.warn(`WebSocket closed: ${event.code}`);
       clearTimeout(pingTimeoutRef.current);
-      reconnectWebSocket();
+      // reconnectWebSocket();
     };
 
     wsRef.current.onerror = (error: Event) => {
@@ -238,7 +250,7 @@ function App() {
       const nickname = decodedData["n"];
       const amount = parseInt(decodedData["a"]);
       const currency = decodedData["c"];
-      setBetState({ status: "placed", bet: new Bet(amount, currency, nickname, 0, userId) });
+      setBetState({ status: "placed", roundId, bet: new Bet(amount, currency, nickname, 0, userId) });
       return;
     }
 
@@ -253,6 +265,7 @@ function App() {
       const points = parseFloat(decodedData["p"]);
       console.log("Win message", decodedData);
       setWinState({ status: "won", data: new Win(amount, currency, nickname, points, 0, userId) });
+      setBetState({ status: "won", roundId, bet: betState.bet });
       return;
     }
 
@@ -260,11 +273,12 @@ function App() {
     if (decodedData["t"] === 18) {
       console.log("Betting round starts", decodedData);
 
-      setBetState({ status: "", bet: new Bet(0, "", "", 0, 0) });
-      setWinState({ status: "", data: new Win(0, "", "", 0, 0, 0) });
-
+      
       const roundId = parseInt(decodedData["r"]);
       const until = parseInt(decodedData["w"]);
+
+      setBetState({ status: "", roundId, bet: new Bet(0, "", "", 0, 0) });
+      setWinState({ status: "", data: new Win(0, "", "", 0, 0, 0) });
       setGameProgress(roundId, GameStatus.BETTING_ROUND);
       betRoundStarts();
       betRoundCountdown(until);
@@ -275,7 +289,7 @@ function App() {
     if (decodedData["t"] === 19) {
       console.log("Betting round ends", decodedData);
       if (betState.status === 'placed') {
-        setBetState( () => ({ status: "placed", bet: betState.bet }) );
+        setBetState( () => ({ status: "placed", roundId, bet: betState.bet }) );
       }
       const roundId = parseInt(decodedData["r"]);
       setGameProgress(roundId, GameStatus.END_BETTING_ROUND);
@@ -310,6 +324,17 @@ function App() {
       return;
     }
 
+              //     if (decodedData["t"] === 22) {
+              //     let roundId = parseInt(decodedData["r"])
+              //     let points = parseFloat(decodedData["p"])
+              //     let elapsed = parseInt(decodedData["e"]) //elapsed ms
+
+              //     setPointsUp(points)
+              //     if(_roundState !== "PLAYING") {
+              //         setGameProgress(roundId, "PLAYING")
+              //     }
+              // }
+
     // Rocket exploded (broadcast to all)
     if (decodedData["t"] === 24) {
       console.log("Rocket exploded", decodedData);
@@ -319,6 +344,10 @@ function App() {
       console.log("roundId", roundId);
       console.log("points", points);
       console.log("sequence", sequence);
+
+      setPoints(points);
+      setBetState({ status: "lost", roundId, bet: betState.bet });
+      setGameProgress(roundId, GameStatus.CANCELLED);
       // Handle rocket explosion
       return;
     }
@@ -359,21 +388,22 @@ function App() {
   };
 
   // Reconnect WebSocket with exponential backoff
-  const reconnectWebSocket = () => {
-    console.log(
-      `reconnecting in ${reconnectTimeoutRef.current / 1000} seconds...`,
-    );
-    reconnectAttemptRef.current = setTimeout(() => {
-      connectWebSocket();
-      reconnectTimeoutRef.current = Math.min(
-        reconnectTimeoutRef.current * 2,
-        3000,
-      );
-    }, reconnectTimeoutRef.current);
-  };
+  // const reconnectWebSocket = () => {
+  //   console.log(
+  //     `reconnecting in ${reconnectTimeoutRef.current / 1000} seconds...`,
+  //   );
+  //   reconnectAttemptRef.current = setTimeout(() => {
+  //     connectWebSocket();
+  //     reconnectTimeoutRef.current = Math.min(
+  //       reconnectTimeoutRef.current * 2,
+  //       3000,
+  //     );
+  //   }, reconnectTimeoutRef.current);
+  // };
 
   // Set game progress
   const setGameProgress = (roundId: number, state: GameStatus) => {
+    console.log("setGameProgress", state);
     setRoundId(roundId);
     setGameStatus(state);
   };
@@ -471,114 +501,108 @@ function App() {
     };
   }, []);
 
-  const handleTabChange = (option: GameOptions) => {
-    setGameMode(option);
-  };
+  // const handleTabChange = (option: GameOptions) => {
+  //   setGameMode(option);
+  // };
 
   return (
     <>
       <div className="game-frame">
         <div className="game-options">
           <div className="game-options__items">
-            <div className="game-history-container">
+            {/* <div className="game-history-container">
               <BetHistory />
-            </div>
-            <GameOptionsTab onTabChange={handleTabChange} />
+            </div> */}
+            {/* <GameOptionsTab onTabChange={handleTabChange} /> */}
             <div className="games-options__content">
-              <h2>Amount</h2>
-
-              <div
-                className={`games-options__amount ${isAmountInputFocused ? "focused" : ""}`}
-              >
-                <input
-                  className="amount-input"
-                  value={amount}
-                  disabled={gameStatus === GameStatus.PLAYING  || betState.status === 'placed'}
-                  onChange={handleAmountChange}
-                  onFocus={() => setIsAmountInputFocused(true)}
-                  onBlur={() => setIsAmountInputFocused(false)}
-                  placeholder="Set amount"
-                />
-
-                <div className="amount-buttons">
-                  <button
-                    role="button"
-                    className="amount-btn"
-                    onClick={() => setAmount(+amount / 2)}
-                    disabled={gameStatus === GameStatus.PLAYING  || betState.status === 'placed'}
-                  >
-                    1/2
-                  </button>
-                  <button
-                    role="button"
-                    className="amount-btn"
-                    onClick={() => setAmount(+amount * 2)}
-                    disabled={gameStatus === GameStatus.PLAYING  || betState.status === 'placed'}
-                  >
-                    2x
-                  </button>
-                  <button
-                    role="button"
-                    className="amount-btn"
-                    onClick={() => setAmount(+amount * 3)}
-                    disabled={gameStatus === GameStatus.PLAYING || betState.status === 'placed'}
-                  >
-                    3x
-                  </button>
-                </div>
+              
+              <div className="games-options__actions__btn">
+                {gameStatus === GameStatus.PLAYING ? (
+                    betState.status === 'placed' ? (
+                      <Button
+                        onClick={handleCashOut}
+                        amount={winSate.status === 'won' ? winSate.data.amount.toFixed(2) : (+points * +amount).toFixed(2)}
+                        label={winSate.status === 'won' ? 'You Win!' : "Cash Out"}
+                      />
+                    ) : (
+                      <Button
+                        label="Waiting next round"
+                      />
+                  ) 
+                ) : (
+                  <Button
+                    onClick={handleBet}
+                    label={`${betState.status === 'placed' ? 'cancel' : 'bet'}`}
+                    amount={`${countdown} s`}
+                  />
+                )}
               </div>
 
-              {gameMode === GameOptions.AUTO && (
-                <>
-                  <h2>Auto Cash Out</h2>
+              <div className="games-options__actions__configs">
+                <div className="games-options__input">
+                  <h2>Amount</h2>
                   <div
-                    className={`games-options__amount ${isCashOutAmountInputFocused ? "focused" : ""}`}
-                  >
+                    className={`games-options__amount ${isAmountInputFocused ? "focused" : ""}`}
+                    >
                     <input
-                      className="amount-input amount-input--auto"
-                      value={cashOut}
-                      onChange={handleCashOutAmountChange}
-                      onFocus={() => setIsCashOutAmountInputFocused(true)}
-                      onBlur={() => setIsCashOutAmountInputFocused(false)}
-                      placeholder="Set cash out amount"
-                      disabled={gameStatus === GameStatus.PLAYING || betState.status === 'placed'}
+                      className="amount-input"
+                      value={amount}
+                      disabled={betState.status === 'placed'}
+                      onChange={handleAmountChange}
+                      onFocus={() => setIsAmountInputFocused(true)}
+                      onBlur={() => setIsAmountInputFocused(false)}
+                      placeholder="Set amount"
                     />
+
+                    <div className="amount-buttons">
+                      <button
+                        role="button"
+                        className="amount-btn"
+                        onClick={() => setAmount(+amount / 2)}
+                        disabled={betState.status === 'placed'}
+                      >
+                        1/2
+                      </button>
+                      <button
+                        role="button"
+                        className="amount-btn"
+                        onClick={() => setAmount(+amount * 2)}
+                        disabled={betState.status === 'placed'}
+                      >
+                        2x
+                      </button>
+                      <button
+                        role="button"
+                        className="amount-btn"
+                        onClick={() => setAmount(+amount * 3)}
+                        disabled={betState.status === 'placed'}
+                      >
+                        3x
+                      </button>
+                    </div>
                   </div>
-                </>
-              )}
+                </div>
 
-              {gameStatus === GameStatus.PLAYING ? (
-                
-                  betState.status === 'placed' ? (
-                    <Button
-                      onClick={handleCashOut}
-                      amount={winSate.status === 'won' ? winSate.data.amount.toFixed(2) : (+points * +amount).toFixed(2)}
-                      label={winSate.status === 'won' ? 'You Win!' : "Cash Out"}
-                    />
-                  ) : (
-                    <Button
-                      label="Waiting next round"
-                    />
-                ) 
-              ) : (
-                <Button
-                  onClick={handleBet}
-                  label={`${betState.status === 'placed' ? 'cancel' : 'bet'}`}
-                  amount={`${countdown} s`}
-                />
-              )}
-            </div>
-          </div>
-
-          <div className="game-stats">
-            <div className="game-stats__item">
-              <span>latency: </span>
-              <span>{latency.toFixed(2)}</span>
-              <span> ms</span>
-            </div>
-            <div className="game-stats__item">
-              <span>online: </span>
-              <span>{onlineUsers}</span>
+                {/* {gameMode === GameOptions.AUTO && ( */}
+                  <div className="games-options__input">
+                    <h2>Auto Cash Out</h2>
+                    <div
+                      className={`games-options__amount ${isCashOutAmountInputFocused ? "focused" : ""}`}
+                      >
+                      <input
+                        className="amount-input amount-input--auto"
+                        value={cashOut}
+                        onChange={handleCashOutAmountChange}
+                        onFocus={() => setIsCashOutAmountInputFocused(true)}
+                        onBlur={() => setIsCashOutAmountInputFocused(false)}
+                        placeholder="Set cash out amount"
+                        disabled={betState.status === 'placed'}
+                      />
+                    </div>
+                  </ div>
+                {/* )} */}
+              </div>
+              
             </div>
           </div>
         </div>
@@ -587,145 +611,32 @@ function App() {
           {/* <Wins history={history} /> */}
           {/* <WheelRoulette newSpin={newSpin} /> */}
 
+          <div className="game-stats">
+            <div className="game-stats__item">
+              <div className="game-stats__item__icon">
+                <img src="../src/assets/user-128.svg" alt="user-icon" width={16} height={16} />:
+              </div>
+              <span>{onlineUsers}</span>
+            </div>
+            <div className="game-stats__item">
+              <NetworkStatus latency={latency} />
+            </div>
+          </div>
+
           <CrashCanvas
             width={dimensions.width}
             height={dimensions.height}
-            drawCaption={gameStatus === GameStatus.PLAYING}
+            // drawCaption={gameStatus === GameStatus.PLAYING}
             points={points}
+            gameStatus={gameStatus}
           />
 
           <div className="game-content__status">
-            {gameStatus !== GameStatus.PLAYING ? <h1>{gameStatus}</h1> : null}
-
-            {showCountdown && (
-              <div className="game-content__status__countdown">
-                <span>Ends in: </span>
-                <span>{countdown}</span>
-              </div>
-            )}
-
-            <h1 style={{ margin: "10px 0 0 0", fontSize: "48px" }}>
-              {points.toFixed(2)}x
-            </h1>
+              <h1 style={{ margin: "10px 0 0 0", fontSize: "48px" }}>
+                { showCountdown ? "left " + countdown + 's' : points.toFixed(2) + "x"  }{}
+              </h1>
           </div>
           {/* width={800} height={600} */}
-        </div>
-      </div>
-
-      <div
-        style={{
-          fontFamily: "Arial, sans-serif",
-          maxWidth: "600px",
-          margin: "0 auto",
-        }}
-      >
-        {/* Status bar */}
-        <div style={{ marginBottom: "20px" }}>
-          <div>
-            <span style={{ fontWeight: "bold" }}>latency: </span>
-            <span style={{ color: "green" }}>{latency.toFixed(2)}</span>
-            <span> ms</span>
-          </div>
-          <div>
-            <span style={{ fontWeight: "bold" }}>online: </span>
-            <span style={{ color: "green" }}>{onlineUsers}</span>
-          </div>
-        </div>
-
-        {/* Game area */}
-        <div
-          style={{
-            height: "200px",
-            width: "100%",
-            backgroundColor: "burlywood",
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "center",
-            alignItems: "center",
-            marginBottom: "20px",
-            borderRadius: "8px",
-            padding: "20px",
-            boxSizing: "border-box",
-          }}
-        >
-          <h1 style={{ margin: "0 0 10px 0" }}>{gameStatus}</h1>
-
-          {showCountdown && (
-            <div style={{ marginBottom: "10px" }}>
-              <span style={{ fontSize: "26px", fontWeight: "bold" }}>
-                Ends in:{" "}
-              </span>
-              <span style={{ fontSize: "26px", fontWeight: "bold" }}>
-                {countdown}
-              </span>
-            </div>
-          )}
-
-          <h1 style={{ margin: "10px 0 0 0", fontSize: "48px" }}>
-            {points.toFixed(2)}x
-          </h1>
-        </div>
-
-        {/* Controls */}
-        <div
-          style={{
-            height: "auto",
-            width: "100%",
-            backgroundColor: "gold",
-            padding: "20px",
-            borderRadius: "8px",
-            boxSizing: "border-box",
-          }}
-        >
-          <div style={{ marginBottom: "10px" }}>
-            <label htmlFor="amount" style={{ marginRight: "10px" }}>
-              Amount
-            </label>
-            <input
-              id="amount"
-              placeholder="amount"
-              type="number"
-              value={amount}
-              onChange={(e) => setAmount(+e.target.value)}
-              style={{ padding: "5px" }}
-            />
-          </div>
-
-          <div style={{ marginBottom: "20px" }}>
-            <label htmlFor="cashOut" style={{ marginRight: "10px" }}>
-              Auto Cashout
-            </label>
-            <input
-              id="cashOut"
-              placeholder="cashOut"
-              type="number"
-              value={cashOut}
-              onChange={(e) => setCashOut(e.target.value)}
-              style={{ padding: "5px" }}
-            />
-          </div>
-
-          <div style={{ display: "flex", gap: "10px" }}>
-            <button
-              id="bet"
-              style={{ width: "100px", padding: "8px" }}
-              type="button"
-              onClick={handleBet}
-              disabled={roundId < 1}
-            >
-              BET
-            </button>
-
-            <button
-              id="btn_cashout"
-              style={{ width: "100px", padding: "8px" }}
-              type="button"
-              onClick={handleCashOut}
-              disabled={roundId < 1}
-            >
-              Cashout
-            </button>
-          </div>
         </div>
       </div>
     </>

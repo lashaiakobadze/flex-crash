@@ -13,23 +13,23 @@ body {
   height: 800px;
   display: flex;
   align-items: center;
-  border-radius: 8px;
+  /* border-radius: 8px; */
   background-color: var(--bg-1);
 }
 
-@media screen and (max-width: 768px) {
+/* @media screen and (max-width: 768px) { */
   .game-frame {
     height: auto;
     flex-direction: column-reverse;
     margin: 0;
   }
-}
+/* } */
 
 .game-options {
-  width: 33%;
+  width: 100%;
   height: 100%;
   min-width: 320px;
-  max-width: 350px;
+  /* max-width: 350px; */
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
@@ -54,11 +54,11 @@ body {
 
 .games-options__content {
   width: 100%;
-  margin-top: 16px;
-  padding: 12px;
+  padding: 24px 12px;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
+  gap: 24px;
 }
 
 @media screen and (max-width: 768px) {
@@ -67,9 +67,38 @@ body {
   }
 }
 
+.games-options__actions__btn {
+  width: 50%;
+  margin: 0 auto;
+  margin-top: 12px;
+}
+
+@media screen and (max-width: 768px) {
+  .games-options__actions__btn {
+    width: 100%;
+  }
+}
+
+.games-options__actions__configs {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+}
+
+@media screen and (max-width: 768px) {
+  .games-options__actions__configs {
+    flex-direction: column;
+  }
+}
+
+.games-options__input {
+  width: 100%;
+}
+
 .games-options__amount {
   width: 100%;
-  margin-bottom: 20px;
+  /* margin-bottom: 20px; */
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -137,7 +166,7 @@ input[type="number"] {
 .game-content {
   border-radius: 0 8px 8px 0;
   position: relative;
-  padding: 40px;
+  /* padding: 40px; */
   gap: 60px;
   width: 100%;
   display: flex;
@@ -146,6 +175,7 @@ input[type="number"] {
   justify-content: flex-start;
   /* background: url(../src/assets/bg-mines-dark.png); */
   object-fit: cover;
+  padding-bottom: 40px;
 }
 
 @media screen and (max-width: 768px) {
@@ -153,6 +183,7 @@ input[type="number"] {
     gap: 20px;
     /* padding: 20px; */
     border-radius: 0;
+    padding: 0;
   }
 }
 
@@ -170,27 +201,29 @@ input[type="number"] {
   color: white;
 }
 
-.game-content__status__countdown {
-  margin: 10px;
-}
-
-.game-content__status__countdown span {
-  font-size: 24px;
-  font-weight: 900;
-}
-
 .game-stats {
   padding: 12px;
   align-self: flex-end;
   width: 100%;
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: center;
+  gap: 10px;
 }
 
 .game-stats__item {
   display: flex;
   align-items: center;
-  gap: 8px;
-  color: rgb(var(--primary) / 1);
+  line-height: 20px;
+  font-size: 16px;
+  color: #f635bf;
+  gap: 4px;
+}
+
+.game-stats__item__icon {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
