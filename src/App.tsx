@@ -664,7 +664,7 @@ function App() {
           <div className="game-stats">
             <div className="game-stats__item">
               <div className="game-stats__item__icon">
-                <img src="../src/assets/user-128.svg" alt="user-icon" width={16} height={16} />:
+                <img src="src/assets/user-128.svg" alt="user-icon" width={16} height={16} />:
               </div>
               <span>{onlineUsers}</span>
             </div>
