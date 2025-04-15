@@ -9,6 +9,8 @@ interface CrashCanvasProps {
   // drawCaption?: boolean;
 
   points?: number;
+  
+  time?: number;
 
   gameStatus?: GameStatus;
 }

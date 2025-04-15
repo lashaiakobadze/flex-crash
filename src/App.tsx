@@ -37,11 +37,13 @@ function App() {
   const [dimensions, setDimensions] = useState({ width: 420, height: 320 });
 
   const [amount, setAmount] = useState<number>(5);
+  const [time, setTime] = useState<number>(0);
   const [isAmountInputFocused, setIsAmountInputFocused] = useState(false);
   const [cashOut, setCashOut] = useState<string>("");
   const [winSate, setWinState] = useState<{status: string, data: Win}>({ status: "", data: new Win(0, "", "", 0, 0, 0) });
   const [betState, setBetState] = useState<{ status: string, bet: Bet, roundId: number }>({ status: "", roundId: 0, bet: new Bet(0, "", "", 0, 0) });
   const [isCashOutAmountInputFocused, setIsCashOutAmountInputFocused] = useState(false);
+  const [winTimeout, setWinTimeout] = useState<boolean>(null);
   
     useEffect(() => {
       const handleResize = () => {
@@ -266,6 +268,12 @@ function App() {
       console.log("Win message", decodedData);
       setWinState({ status: "won", data: new Win(amount, currency, nickname, points, 0, userId) });
       setBetState({ status: "won", roundId, bet: betState.bet });
+      setWinTimeout(true);
+
+      setTimeout(() => {
+        setWinTimeout(false);
+      }, 2000);
+
       return;
     }
 
@@ -312,12 +320,14 @@ function App() {
     if (decodedData["t"] === 22) {
       const roundId = parseInt(decodedData["r"]);
       const points = parseFloat(decodedData["p"]);
-      const sequence = parseInt(decodedData["q"]);
+      // const sequence = parseInt(decodedData["q"]);
+      const time = parseInt(decodedData["e"]); //elapsed ms
       // console.log("roundId", roundId);
       // console.log("points", points);
-      console.log("sequence", sequence);
+      // console.log("sequence", sequence);
 
       setPoints(points);
+      setTime(time);
       if (gameStatus !== GameStatus.PLAYING) {
         setGameProgress(roundId, GameStatus.PLAYING);
       }
@@ -367,6 +377,46 @@ function App() {
       setRoundId(roundId);
       return;
     }
+
+//     if (decodedData["t"] === 30) {
+//                   let roundId = parseInt(decodedData["r"])
+//                   let p = parseInt(decodedData["p"])
+//                   let s = parseInt(decodedData["s"]) // 0= upcoming, 1=current, 4= finished, 5= canceled
+//                   console.log(decodedData)
+//               }
+// ეს თამაშების ისტორიისთვის და
+// და ეს 2 ივენთი კიდე:
+// / ფსონი თუ დაიდება მოვა ეს ივენთი (მხოლოდ იუზერს ეგზავნება)
+//               if (decodedData["t"] === 2) {
+//                  let roundId = parseInt(decodedData["r"]);
+//                  let userId = parseInt(decodedData["u"]);
+//                  let amount = parseInt(decodedData["a"])
+//                  let currency = decodedData["c"]
+//                  let balance = decodedData["b"]
+
+//                   console.log("your bet accepted", decodedData)
+//               }
+
+//               // ფსონი თუ არ დაიდება (მხოლოდ იუზერს ეგზავნება)
+//               if (decodedData["t"] === 4) {
+//                   let roundId = parseInt(decodedData["r"]);
+//                   let userId = parseInt(decodedData["u"]);
+//                   let amount = parseInt(decodedData["a"])
+//                   let currency = decodedData["c"]
+//                   let balance = decodedData["b"]
+//                   let errorCode = decodedData["e"]
+
+//                   console.log("your bet rejected", decodedData)
+//               }
+// // ბეთების დადება დაიწყო
+//               if (decodedData["t"] === 18) {
+//                   let roundId = parseInt(decodedData["r"])
+//                   let until = parseInt(decodedData["w"])
+//                   let seconds =  decodedData["s"]  //რამდენ ხანში მორჩება ბეთ რაუნდი
+//                   setGameProgress(roundId, "BETTING_ROUND")
+//                   betRoundStarts()
+//                   betRoundCountdown(until)
+//               }
   };
 
   // Start ping interval
@@ -628,14 +678,24 @@ function App() {
             height={dimensions.height}
             // drawCaption={gameStatus === GameStatus.PLAYING}
             points={points}
+            time={time}
             gameStatus={gameStatus}
           />
 
           <div className="game-content__status">
               <h1 style={{ margin: "10px 0 0 0", fontSize: "48px" }}>
-                { showCountdown ? "left " + countdown + 's' : points.toFixed(2) + "x"  }{}
+                { showCountdown ? "left " + countdown + 's' : betState.status === 'lost' ? 'Crashed' : points.toFixed(2) + "x"  }{}
               </h1>
           </div>
+
+            {betState.status === 'won' && winTimeout && (
+              <div className="game-content__win visible">
+                <h1 style={{ margin: "10px 0 0 0", fontSize: "48px" }}>
+                  Win {winSate.data.amount.toFixed(2)} {winSate.data.currency}!
+                </h1>
+              </div>
+           )} 
+
           {/* width={800} height={600} */}
         </div>
       </div>
