@@ -9,25 +9,33 @@ body {
 }
 
 .game-frame {
-  margin: 20px;
-  height: 800px;
+  width: 100%;
   display: flex;
-  align-items: center;
-  /* border-radius: 8px; */
+  justify-content: space-between;
   background-color: rgb(var(--primary-bg));
 }
 
-/* @media screen and (max-width: 768px) { */
-.game-frame {
-  height: auto;
-  flex-direction: column-reverse;
-  margin: 0;
+@media screen and (max-width: 768px) {
+  .game-frame {
+    flex-direction: column-reverse;
+    margin: 0;
+  }
 }
-/* } */
+
+.game-area {
+  width: 80%;
+  margin: 20px;
+}
+
+@media screen and (max-width: 768px) {
+  .game-area {
+    width: 100%;
+    margin: 0 auto;
+  }
+}
 
 .game-options {
   width: 100%;
-  height: 100%;
   min-width: 320px;
   /* max-width: 350px; */
   display: flex;
@@ -48,7 +56,7 @@ body {
 }
 
 .game-history-container {
-  height: 100%;
+  width: 100%;
   padding: 12px;
 }
 
@@ -167,22 +175,18 @@ input[type="number"] {
 .game-content {
   border-radius: 0 8px 8px 0;
   position: relative;
-  /* padding: 40px; */
-  gap: 60px;
   width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  /* background: url(../src/assets/bg-mines-dark.png); */
+  background: url(../src/assets/bg-mines-dark.png);
   object-fit: cover;
   padding-bottom: 40px;
 }
 
 @media screen and (max-width: 768px) {
   .game-content {
-    gap: 20px;
-    /* padding: 20px; */
     border-radius: 0;
     padding: 0;
   }
@@ -191,12 +195,11 @@ input[type="number"] {
 .game-content__status {
   position: absolute;
   z-index: 100;
-  height: 200px;
+  top: 15%;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  padding: 20px;
   box-sizing: border-box;
   color: rgb(var(--primary));
 }
@@ -216,6 +219,33 @@ input[type="number"] {
   display: flex;
   align-items: center;
   gap: 10px;
+}
+
+.game-state__round-history {
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 10px;
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+}
+
+@media screen and (max-width: 768px) {
+  .game-state__round-history--desktop {
+    display: none;
+  }
+}
+
+.game-state__round-history--mobile {
+  height: 40px;
+  padding: 0 10px;
+}
+
+@media screen and (min-width: 768px) {
+  .game-state__round-history--mobile {
+    display: none;
+  }
 }
 
 .game-stats__item {

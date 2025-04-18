@@ -207,7 +207,7 @@ const CrashCanvas: React.FC<CrashCanvasProps> = ({
   return (
     <div>
       <canvas
-        style={{ background: `${primaryBgColor}` }}
+        // style={{ background: `${primaryBgColor}` }}
         ref={canvasRef}
         width={width}
         height={height}
