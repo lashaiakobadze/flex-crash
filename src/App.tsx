@@ -45,6 +45,7 @@ function App() {
   const [betState, setBetState] = useState<{ status: string, bet: Bet, roundId: number }>({ status: "", roundId: 0, bet: new Bet(0, "", "", 0, 0) });
   const [isCashOutAmountInputFocused, setIsCashOutAmountInputFocused] = useState(false);
   const [winTimeout, setWinTimeout] = useState<boolean>(null);
+  const [betRoundSeconds, setBetRoundSeconds] = useState<number>(0);
   
     useEffect(() => {
       const handleResize = () => {
@@ -149,9 +150,6 @@ function App() {
   );
   const [points, setPoints] = useState<number>(0);
   const [roundId, setRoundId] = useState<number>(0);
-  // const [amount, setAmount] = useState<string>('');
-  // const [cashOut, setCashOut] = useState<string>('');
-  const [countdown, setCountdown] = useState<number>(0);
   const [showCountdown, setShowCountdown] = useState<boolean>(false);
 
   // Refs
@@ -281,16 +279,14 @@ function App() {
     // Betting round starts
     if (decodedData["t"] === 18) {
       console.log("Betting round starts", decodedData);
-
       
       const roundId = parseInt(decodedData["r"]);
-      const until = parseInt(decodedData["w"]);
 
       setBetState({ status: "", roundId, bet: new Bet(0, "", "", 0, 0) });
       setWinState({ status: "", data: new Win(0, "", "", 0, 0, 0) });
       setGameProgress(roundId, GameStatus.BETTING_ROUND);
       betRoundStarts();
-      betRoundCountdown(until);
+
       return;
     }
 
@@ -335,16 +331,16 @@ function App() {
       return;
     }
 
-              //     if (decodedData["t"] === 22) {
-              //     let roundId = parseInt(decodedData["r"])
-              //     let points = parseFloat(decodedData["p"])
-              //     let elapsed = parseInt(decodedData["e"]) //elapsed ms
+    //     if (decodedData["t"] === 22) {
+    //     let roundId = parseInt(decodedData["r"])
+    //     let points = parseFloat(decodedData["p"])
+    //     let elapsed = parseInt(decodedData["e"]) //elapsed ms
 
-              //     setPointsUp(points)
-              //     if(_roundState !== "PLAYING") {
-              //         setGameProgress(roundId, "PLAYING")
-              //     }
-              // }
+    //     setPointsUp(points)
+    //     if(_roundState !== "PLAYING") {
+    //         setGameProgress(roundId, "PLAYING")
+    //     }
+    // }
 
     // Rocket exploded (broadcast to all)
     if (decodedData["t"] === 24) {
@@ -374,20 +370,22 @@ function App() {
     if (decodedData["t"] === 28) {
       const roundId = parseInt(decodedData["r"]);
       const seconds = parseInt(decodedData["w"]);
-      console.log("seconds", seconds);
+
+      setBetRoundSeconds(seconds);
       setRoundId(roundId);
       return;
     }
 
-//     if (decodedData["t"] === 30) {
+//         if (decodedData["t"] === 30) {
 //                   let roundId = parseInt(decodedData["r"])
 //                   let p = parseInt(decodedData["p"])
 //                   let s = parseInt(decodedData["s"]) // 0= upcoming, 1=current, 4= finished, 5= canceled
 //                   console.log(decodedData)
-//               }
-// ეს თამაშების ისტორიისთვის და
-// და ეს 2 ივენთი კიდე:
-// / ფსონი თუ დაიდება მოვა ეს ივენთი (მხოლოდ იუზერს ეგზავნება)
+//         }
+    
+// // ეს თამაშების ისტორიისთვის და
+// // და ეს 2 ივენთი კიდე:
+// // / ფსონი თუ დაიდება მოვა ეს ივენთი (მხოლოდ იუზერს ეგზავნება)
 //               if (decodedData["t"] === 2) {
 //                  let roundId = parseInt(decodedData["r"]);
 //                  let userId = parseInt(decodedData["u"]);
@@ -398,7 +396,7 @@ function App() {
 //                   console.log("your bet accepted", decodedData)
 //               }
 
-//               // ფსონი თუ არ დაიდება (მხოლოდ იუზერს ეგზავნება)
+// //               // ფსონი თუ არ დაიდება (მხოლოდ იუზერს ეგზავნება)
 //               if (decodedData["t"] === 4) {
 //                   let roundId = parseInt(decodedData["r"]);
 //                   let userId = parseInt(decodedData["u"]);
@@ -408,15 +406,6 @@ function App() {
 //                   let errorCode = decodedData["e"]
 
 //                   console.log("your bet rejected", decodedData)
-//               }
-// // ბეთების დადება დაიწყო
-//               if (decodedData["t"] === 18) {
-//                   let roundId = parseInt(decodedData["r"])
-//                   let until = parseInt(decodedData["w"])
-//                   let seconds =  decodedData["s"]  //რამდენ ხანში მორჩება ბეთ რაუნდი
-//                   setGameProgress(roundId, "BETTING_ROUND")
-//                   betRoundStarts()
-//                   betRoundCountdown(until)
 //               }
   };
 
@@ -459,28 +448,6 @@ function App() {
     setGameStatus(state);
   };
 
-  // Start bet round countdown
-  const betRoundCountdown = (unixTime: number) => {
-    if (countdownStartedRef.current) return;
-    countdownStartedRef.current = true;
-
-    if (countdownIntervalRef.current) {
-      clearInterval(countdownIntervalRef.current);
-    }
-
-    countdownIntervalRef.current = setInterval(() => {
-      const currentTime = Math.floor(Date.now() / 1000);
-      const remainingTime = unixTime - currentTime;
-
-      if (remainingTime <= 0) {
-        clearInterval(countdownIntervalRef.current);
-        setCountdown(0);
-        countdownStartedRef.current = false;
-      } else {
-        setCountdown(remainingTime);
-      }
-    }, 1000);
-  };
 
   // Show countdown elements
   const betRoundStarts = () => {
@@ -566,7 +533,6 @@ function App() {
             </div> */}
             {/* <GameOptionsTab onTabChange={handleTabChange} /> */}
             <div className="games-options__content">
-              
               <div className="games-options__actions__btn">
                 {gameStatus === GameStatus.PLAYING ? (
                     betState.status === 'placed' ? (
@@ -583,8 +549,9 @@ function App() {
                 ) : (
                   <Button
                     onClick={handleBet}
-                    label={`${betState.status === 'placed' ? 'cancel' : 'bet'}`}
-                    amount={`${countdown} s`}
+                    label={`${betState.status === 'placed' ? 'placed' : 'bet'}`}
+                    amount={`${betRoundSeconds} s`}
+                    disabled={betState.status === 'placed' || gameStatus !== GameStatus.BETTING_ROUND}
                   />
                 )}
               </div>
@@ -685,15 +652,15 @@ function App() {
 
           <div className="game-content__status">
               <h1 style={{ margin: "10px 0 0 0", fontSize: "48px" }}>
-                { showCountdown ? "left " + countdown + 's' : betState.status === 'lost' ? 'Crashed' : points.toFixed(2) + "x"  }{}
+                { showCountdown ? "left " + betRoundSeconds + 's' : betState.status === 'lost' ? 'Crashed' : points.toFixed(2) + "x"  }{}
               </h1>
           </div>
 
             {betState.status === 'won' && winTimeout && (
               <div className="game-content__win visible">
-                <h1 style={{ margin: "10px 0 0 0", fontSize: "48px" }}>
+                <span>
                   Win {winSate.data.amount.toFixed(2)} {winSate.data.currency}!
-                </h1>
+                </span>
               </div>
            )} 
 

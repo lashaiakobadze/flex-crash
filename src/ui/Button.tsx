@@ -6,14 +6,16 @@ interface ButtonProps {
   label: string;
 
   amount?: string;
+  disabled?: boolean;
 }
 
-const Button: React.FC<ButtonProps> = ({ onClick, label, amount }) => {
+const Button: React.FC<ButtonProps> = ({ onClick, label, amount, disabled }) => {
   return (
     <button
       onClick={onClick}
       className={`${styles.button} ${styles.buttonBrand}`}
       type="button"
+      disabled={disabled}
     >
       <span
         className={`${styles.buttonContent} inline-flex items-center gap-2 text-lg font-extrabold sm:text-sm sm:font-normal`}
