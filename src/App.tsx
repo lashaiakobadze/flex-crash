@@ -56,21 +56,21 @@ function App() {
   const [betRoundSeconds, setBetRoundSeconds] = useState<number>(0);
 
   const [roundBetHistory, setRoundBetHistory] = useState<any[]>([
-    // { multiplier: 0 },
-    // { multiplier: 1.5 },
-    // { multiplier: 2 },
-    // { multiplier: 0 },
-    // { multiplier: 1.5 },
-    // { multiplier: 2 },
-    // { multiplier: 0 },
-    // { multiplier: 1.5 },
-    // { multiplier: 2 },
-    // { multiplier: 0 },
-    // { multiplier: 1.5 },
-    // { multiplier: 2 },
-    // { multiplier: 0 },
-    // { multiplier: 1.5 },
-    // { multiplier: 2 },
+    { multiplier: 0 },
+    { multiplier: 1.5 },
+    { multiplier: 2 },
+    { multiplier: 0 },
+    { multiplier: 1.5 },
+    { multiplier: 2 },
+    { multiplier: 0 },
+    { multiplier: 1.5 },
+    { multiplier: 2 },
+    { multiplier: 0 },
+    { multiplier: 1.5 },
+    { multiplier: 2 },
+    { multiplier: 0 },
+    { multiplier: 1.5 },
+    { multiplier: 2 },
   ]);
 
   useEffect(() => {
