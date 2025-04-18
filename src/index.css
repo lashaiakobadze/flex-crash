@@ -1,12 +1,13 @@
 :root {
   background-color: rgba(36, 36, 36, 0.9);
 }
+
 :root {
-  --color-primary: #000;
-  --bg-1: rgb(0, 0, 0);
+  --brand-color: #f635bf;
+  --primary-bg: rgb(0, 0, 0);
   --bg-2: rgb(35, 38, 38);
 
-  --primary: 255 255 255;
+  --primary: #ffffff;
   --primary_brand: 0 0 0;
   --secondary: 179 190 193;
 

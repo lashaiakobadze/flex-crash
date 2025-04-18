@@ -1,6 +1,7 @@
 import * as React from "react";
 import { CrashEngine } from "./CrashEngine";
 import { GameStatus } from "../../App";
+import { useColor } from "../../context/ColorContext";
 
 interface CrashCanvasProps {
   width?: number;
@@ -26,6 +27,8 @@ const CrashCanvas: React.FC<CrashCanvasProps> = ({
   const engineRef = React.useRef<CrashEngine | null>(null);
   const animationFrameRef = React.useRef<number | null>(null);
   const [isMounted, setIsMounted] = React.useState(false);
+  const { brandColor } = useColor();
+  const { primaryBgColor } = useColor();
 
   // console.log("points in childe", points);
 
@@ -53,7 +56,7 @@ const CrashCanvas: React.FC<CrashCanvasProps> = ({
 
       // Draw line (same as before)
       ctx.beginPath();
-      ctx.strokeStyle = "#f635bf";
+      ctx.strokeStyle = brandColor;
       ctx.lineWidth = 2;
       ctx.moveTo(0, engine.plotHeight);
       const a = engine.getElapsedPosition(engine.elapsedTime);
@@ -78,7 +81,7 @@ const CrashCanvas: React.FC<CrashCanvasProps> = ({
       // }
 
       ctx.font = "15px sans-serif";
-      ctx.fillStyle = "#f635bf";
+      ctx.fillStyle = brandColor;
       ctx.strokeStyle = "#777";
 
       if (gameStatus == GameStatus.PLAYING) {
@@ -100,7 +103,7 @@ const CrashCanvas: React.FC<CrashCanvasProps> = ({
           const positionY = engine.plotHeight - offset * stepScale;
 
           // Draw ticker
-          ctx.strokeStyle = "#f635bf"; // danayofebi
+          ctx.strokeStyle = brandColor; // danayofebi
           ctx.lineWidth = 2;
           ctx.beginPath();
           ctx.moveTo(positionX - 2, positionY);
@@ -148,7 +151,7 @@ const CrashCanvas: React.FC<CrashCanvasProps> = ({
           const positionY = engine.plotHeight + 10;
 
           // Draw ticker
-          ctx.strokeStyle = "#f635bf";
+          ctx.strokeStyle = brandColor;
           ctx.lineWidth = 2;
           ctx.beginPath();
           ctx.moveTo(positionX, positionY - 1);
@@ -203,7 +206,12 @@ const CrashCanvas: React.FC<CrashCanvasProps> = ({
 
   return (
     <div>
-      <canvas style={{ background: "#000" }} ref={canvasRef} width={width} height={height} />
+      <canvas
+        style={{ background: `${primaryBgColor}` }}
+        ref={canvasRef}
+        width={width}
+        height={height}
+      />
     </div>
   );
 };

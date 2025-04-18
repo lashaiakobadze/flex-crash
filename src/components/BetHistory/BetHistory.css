@@ -42,12 +42,12 @@
 }
 
 .tab.active {
-  color: #fff;
+  color: #ffffff;
   cursor: default;
 }
 
 .click {
   background: rgb(44, 45, 48);
   border-radius: 10px;
-  color: #fff;
+  color: #ffffff;
 }

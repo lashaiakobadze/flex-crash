@@ -10,15 +10,21 @@
   border-radius: 0.375rem;
   user-select: none;
   filter: brightness(var(--tw-brightness));
+  transition: all 0.2s ease; /* Add smooth transitions */
 }
 
+/* Primary button style */
+.button:not(.buttonBrand) {
+  color: rgb(var(--primary));
+  border: 1px solid rgb(var(--primary));
+  background: transparent;
+}
+
+/* Brand button style - now handled by inline styles */
 .buttonBrand {
-  color: rgb(var(--color-primary));
+  color: rgb(var(--primary));
   font-weight: 800;
-  background-image: linear-gradient(90deg, rgb(238 36 184), rgb(232 113 165));
-  box-shadow:
-    rgba(35, 238, 136, 0.3) 0px 0px 12px,
-    rgb(202 29 122) 0px -2px inset;
+  /* Gradient and shadows moved to inline styles */
 }
 
 .buttonContent {

@@ -49,7 +49,7 @@
   box-shadow:
     rgba(35, 238, 136, 0.3) 0px 0px 12px,
     rgb(202 29 122) 0px -2px inset;
-  color: var(--color-primary);
+  color: var(--primary);
 }
 
 .item.lost {

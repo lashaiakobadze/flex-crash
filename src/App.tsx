@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 import * as msgpack from "msgpack-lite";
-import userIcon from "./assets/user-128.svg";
 
 import "./App.css";
 // import GameOptionsTab, {
@@ -11,6 +10,9 @@ import CrashCanvas from "./components/Crash/CrashCanvas";
 // import BetHistory from "./components/BetHistory/BetHistory";
 import { Bet, Win } from "./models";
 import NetworkStatus from "./components/NetworkStatus/NetworkStatus";
+import { ColorPicker } from "./components/ColorPicker/ColorPicker";
+import { Icon } from "./ui/Icon";
+import { Dropdown } from "./components/Dropdown/Dropdown";
 
 // Constants
 const PING_INTERVAL = 8000;
@@ -553,7 +555,7 @@ function App() {
 
               <div className="games-options__actions__configs">
                 <div className="games-options__input">
-                  <h2>Amount</h2>
+                  <h2 className="games-options__input__title">Amount</h2>
                   <div className={`games-options__amount ${isAmountInputFocused ? "focused" : ""}`}>
                     <input
                       className="amount-input"
@@ -596,7 +598,7 @@ function App() {
 
                 {/* {gameMode === GameOptions.AUTO && ( */}
                 <div className="games-options__input">
-                  <h2>Auto Cash Out</h2>
+                  <h2 className="games-options__input__title">Auto Cash Out</h2>
                   <div
                     className={`games-options__amount ${isCashOutAmountInputFocused ? "focused" : ""}`}
                   >
@@ -622,14 +624,29 @@ function App() {
           {/* <WheelRoulette newSpin={newSpin} /> */}
 
           <div className="game-stats">
-            <div className="game-stats__item">
-              <div className="game-stats__item__icon">
-                <img src={userIcon} alt="user-icon" width={16} height={16} />:
+            <div className="game-stats__left">
+              <div className="game-stats__item">
+                <div className="game-stats__item__icon">
+                  <Icon type="user" size={16} />:
+                </div>
+                <span>{onlineUsers}</span>
               </div>
-              <span>{onlineUsers}</span>
+              <div className="game-stats__item">
+                <NetworkStatus latency={latency} />
+              </div>
             </div>
+
             <div className="game-stats__item">
-              <NetworkStatus latency={latency} />
+              <Dropdown
+                trigger={
+                  <div className="game-stats__item__icon">
+                    <Icon type="settings" size={18} />
+                  </div>
+                }
+              >
+                <ColorPicker />
+              </Dropdown>
+              <span>{user.name}</span>
             </div>
           </div>
 

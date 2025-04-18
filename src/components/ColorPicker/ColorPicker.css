@@ -1,0 +1,46 @@
+.color-picker-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border: 1px solid rgb(var(--layer4));
+}
+
+.color-picker-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.color-picker-input {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.color-picker-input input[type="color"] {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  width: 40px;
+  height: 40px;
+  border: 2px solid rgb(var(--layer4));
+  border-radius: 8px;
+  padding: 0;
+  cursor: pointer;
+  background: transparent;
+}
+
+.color-picker-input input[type="color"]::-webkit-color-swatch {
+  border-radius: 6px;
+  border: none;
+}
+
+.color-picker-input input[type="color"]::-moz-color-swatch {
+  border-radius: 6px;
+  border: none;
+}
+
+.color-picker-input span {
+  font-family: monospace;
+  font-size: 14px;
+}
