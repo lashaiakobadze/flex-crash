@@ -28,7 +28,7 @@ const CrashCanvas: React.FC<CrashCanvasProps> = ({
   const animationFrameRef = React.useRef<number | null>(null);
   const [isMounted, setIsMounted] = React.useState(false);
   const { brandColor } = useColor();
-  const { primaryBgColor } = useColor();
+  // const { primaryBgColor } = useColor();
 
   // console.log("points in childe", points);
 
