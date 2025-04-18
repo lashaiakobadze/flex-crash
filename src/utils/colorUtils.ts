@@ -64,7 +64,7 @@ export function darkenColor(hex: string, percent: number): string {
 /**
  * Converts hex to HSL
  */
-function hexToHsl(hex: string): { h: number; s: number; l: number } {
+export function hexToHsl(hex: string): { h: number; s: number; l: number } {
   const { r, g, b } = hexToRgb(hex);
 
   // Normalize r, g, b to 0-1
@@ -102,7 +102,7 @@ function hexToHsl(hex: string): { h: number; s: number; l: number } {
 /**
  * Converts HSL to hex
  */
-function hslToHex(h: number, s: number, l: number): string {
+export function hslToHex(h: number, s: number, l: number): string {
   h /= 360;
   s /= 100;
   l /= 100;
