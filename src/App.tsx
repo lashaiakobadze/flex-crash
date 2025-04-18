@@ -51,6 +51,8 @@ function App() {
   const [winTimeout, setWinTimeout] = useState<boolean>(null);
   const [betRoundSeconds, setBetRoundSeconds] = useState<number>(0);
 
+  const [roundBetHistory, setRoundBetHistory] = useState<any[]>([]);
+
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth < 420) {
@@ -146,7 +148,7 @@ function App() {
 
   /// CRASH GAME ///
   // State
-  const [uid] = useState<number>(Date.now());
+  const [user, setUser] = useState<{ id: number; name: string }>({ id: 1998, name: "test_payer" });
   const [latency, setLatency] = useState<number>(0);
   const [onlineUsers, setOnlineUsers] = useState<number>(0);
   const [gameStatus, setGameStatus] = useState<GameStatus>(GameStatus.BETTING_ROUND);
@@ -163,7 +165,7 @@ function App() {
   const countdownStartedRef = useRef<boolean>(false);
 
   // const WS_URL = `ws://localhost:5000/connect?user_id=${uid}`;
-  const WS_URL = "wss://crash.flexgaming.net/connect?is_dev=true&user_id=" + uid; //
+  const WS_URL = "wss://crash.flexgaming.net/connect?is_dev=true&user_id=" + user.id;
 
   // WebSocket connection management
   const connectWebSocket = () => {
@@ -171,6 +173,8 @@ function App() {
 
     wsRef.current.onopen = () => {
       console.log("Connected to WebSocket");
+
+      setUser({ id: 1998, name: "test_payer" });
       startPing(true);
       reconnectTimeoutRef.current = 3000;
     };
@@ -219,73 +223,79 @@ function App() {
 
     // Bet placed (only to user)
     if (decodedData["t"] === 2) {
-      console.log("Bet placed  (only to user)", decodedData);
-
       const userId = parseInt(decodedData["u"]);
-      const amount = parseInt(decodedData["a"]);
+      const amount = parseInt(decodedData["a"]); // fix amount is empty
       const currency = decodedData["c"];
-      console.log("userId", userId);
-      console.log("amount", amount);
-      console.log("currency", currency);
-      // Handle bet placed confirmation
+      const balance = decodedData["b"];
+      const roundId = parseInt(decodedData["r"]);
+
+      console.log("2", { userId, amount, currency, balance, roundId }, decodedData);
       return;
     }
 
     // Bet not placed (only to user)
     if (decodedData["t"] === 4) {
-      console.log("Bet not placed (only to user)", decodedData);
-
       const userId = parseInt(decodedData["u"]);
       const amount = parseInt(decodedData["a"]);
       const currency = decodedData["c"];
-      console.log("userId", userId);
-      console.log("amount", amount);
-      console.log("currency", currency);
-      // Handle bet not placed
+
+      console.log("4", { userId, amount, currency }, decodedData);
       return;
     }
 
     // Bet placed (broadcast to all)
     if (decodedData["t"] === 8) {
-      console.log("Bet placed", decodedData);
-
       const userId = parseInt(decodedData["u"]);
       const nickname = decodedData["n"];
       const amount = parseInt(decodedData["a"]);
       const currency = decodedData["c"];
-      setBetState({
-        status: "placed",
-        roundId,
-        bet: new Bet(amount, currency, nickname, 0, userId),
-      });
+
+      if (userId === user.id) {
+        setBetState({
+          status: "placed",
+          roundId,
+          bet: new Bet(amount, currency, nickname, 0, userId),
+        });
+
+        setRoundBetHistory((prev) => [...prev, new Bet(amount, currency, nickname, 0, userId)]);
+      } else {
+        setRoundBetHistory((prev) => [...prev, new Bet(amount, currency, nickname, 0, userId)]);
+      }
+
+      console.log("8", { userId, nickname, amount, currency }, decodedData);
+      console.log("bet history", roundBetHistory);
+
       return;
     }
 
     // Player won (broadcast to all)
     if (decodedData["t"] === 10) {
-      console.log("Player won", decodedData);
-
       const userId = parseInt(decodedData["u"]);
       const nickname = decodedData["n"];
       const amount = parseInt(decodedData["a"]);
       const currency = decodedData["c"];
       const points = parseFloat(decodedData["p"]);
-      console.log("Win message", decodedData);
-      setWinState({ status: "won", data: new Win(amount, currency, nickname, points, 0, userId) });
-      setBetState({ status: "won", roundId, bet: betState.bet });
-      setWinTimeout(true);
 
-      setTimeout(() => {
-        setWinTimeout(false);
-      }, 2000);
+      if (userId === user.id) {
+        setWinState({
+          status: "won",
+          data: new Win(amount, currency, nickname, points, 0, userId),
+        });
+        setBetState({ status: "won", roundId, bet: betState.bet });
+        setWinTimeout(true);
+
+        setTimeout(() => {
+          setWinTimeout(false);
+        }, 2000);
+      }
+
+      console.log("10", { userId, nickname, amount, currency, points }, decodedData);
 
       return;
     }
 
     // Betting round starts
     if (decodedData["t"] === 18) {
-      console.log("Betting round starts", decodedData);
-
       const roundId = parseInt(decodedData["r"]);
 
       setBetState({ status: "", roundId, bet: new Bet(0, "", "", 0, 0) });
@@ -293,29 +303,33 @@ function App() {
       setGameProgress(roundId, GameStatus.BETTING_ROUND);
       betRoundStarts();
 
+      console.log("18", { roundId, decodedData });
+
       return;
     }
 
     // Betting round ends
     if (decodedData["t"] === 19) {
-      console.log("Betting round ends", decodedData);
-      if (betState.status === "placed") {
-        setBetState(() => ({ status: "placed", roundId, bet: betState.bet }));
-      }
+      // if (betState.status === "placed") {
+      //   setBetState(() => ({ status: "placed", roundId, bet: betState.bet }));
+      // }
+
       const roundId = parseInt(decodedData["r"]);
       setGameProgress(roundId, GameStatus.END_BETTING_ROUND);
       betRoundEnd();
+
+      console.log("19", { roundId, decodedData });
+
       return;
     }
 
     // New round created
     if (decodedData["t"] === 20) {
-      console.log("New round created", decodedData);
-
       const roundId = parseInt(decodedData["r"]);
       const hash = decodedData["h"];
-      console.log("hash", hash);
       setRoundId(roundId);
+
+      console.log("20", { roundId, hash }, decodedData);
       return;
     }
 
@@ -323,34 +337,31 @@ function App() {
     if (decodedData["t"] === 22) {
       const roundId = parseInt(decodedData["r"]);
       const points = parseFloat(decodedData["p"]);
-      // const sequence = parseInt(decodedData["q"]);
-      const time = parseInt(decodedData["e"]); //elapsed ms
-      // console.log("roundId", roundId);
-      // console.log("points", points);
-      // console.log("sequence", sequence);
+      const time = parseInt(decodedData["e"]);
 
       setPoints(points);
       setTime(time);
+
       if (gameStatus !== GameStatus.PLAYING) {
         setGameProgress(roundId, GameStatus.PLAYING);
       }
+
+      // console.log("22", { roundId, points, time }, decodedData);
+
       return;
     }
 
     // Rocket exploded (broadcast to all)
     if (decodedData["t"] === 24) {
-      console.log("Rocket exploded", decodedData);
       const roundId = parseInt(decodedData["r"]);
       const points = parseFloat(decodedData["p"]);
       const sequence = parseInt(decodedData["q"]);
-      console.log("roundId", roundId);
-      console.log("points", points);
-      console.log("sequence", sequence);
 
       setPoints(points);
       setBetState({ status: "lost", roundId, bet: betState.bet });
       setGameProgress(roundId, GameStatus.CANCELLED);
-      // Handle rocket explosion
+
+      console.log("24", { roundId, points, sequence }, decodedData);
       return;
     }
 
@@ -358,50 +369,43 @@ function App() {
     if (decodedData["t"] === 26) {
       const onlineUsers = parseInt(decodedData["o"]);
       setOnlineUsers(onlineUsers);
+
+      console.log("26", { onlineUsers }, decodedData);
       return;
     }
 
     // Bet round timer (broadcast to all)
     if (decodedData["t"] === 28) {
       const roundId = parseInt(decodedData["r"]);
-      const seconds = parseInt(decodedData["w"]);
+      const seconds = parseInt(decodedData["w"]); // fix seconds are send only
 
       setBetRoundSeconds(seconds);
       setRoundId(roundId);
+
+      console.log("28", { roundId, seconds }, decodedData);
       return;
     }
 
-    //         if (decodedData["t"] === 30) {
-    //                   let roundId = parseInt(decodedData["r"])
-    //                   let p = parseInt(decodedData["p"])
-    //                   let s = parseInt(decodedData["s"]) // 0= upcoming, 1=current, 4= finished, 5= canceled
-    //                   console.log(decodedData)
-    //         }
+    // ???
+    // if (decodedData["t"] === 30) {
+    //   let roundId = parseInt(decodedData["r"]);
+    //   let p = parseInt(decodedData["p"]);
+    //   let s = parseInt(decodedData["s"]); // 0= upcoming, 1=current, 4= finished, 5= canceled
 
-    // // ეს თამაშების ისტორიისთვის და
-    // // და ეს 2 ივენთი კიდე:
-    // // / ფსონი თუ დაიდება მოვა ეს ივენთი (მხოლოდ იუზერს ეგზავნება)
-    //               if (decodedData["t"] === 2) {
-    //                  let roundId = parseInt(decodedData["r"]);
-    //                  let userId = parseInt(decodedData["u"]);
-    //                  let amount = parseInt(decodedData["a"])
-    //                  let currency = decodedData["c"]
-    //                  let balance = decodedData["b"]
+    //   console.log("30", decodedData);
+    // }
 
-    //                   console.log("your bet accepted", decodedData)
-    //               }
+    // ფსონი თუ არ დაიდება (მხოლოდ იუზერს ეგზავნება)
+    if (decodedData["t"] === 4) {
+      let roundId = parseInt(decodedData["r"]);
+      let userId = parseInt(decodedData["u"]);
+      let amount = parseInt(decodedData["a"]);
+      let currency = decodedData["c"];
+      let balance = decodedData["b"];
+      let errorCode = decodedData["e"];
 
-    // //               // ფსონი თუ არ დაიდება (მხოლოდ იუზერს ეგზავნება)
-    //               if (decodedData["t"] === 4) {
-    //                   let roundId = parseInt(decodedData["r"]);
-    //                   let userId = parseInt(decodedData["u"]);
-    //                   let amount = parseInt(decodedData["a"])
-    //                   let currency = decodedData["c"]
-    //                   let balance = decodedData["b"]
-    //                   let errorCode = decodedData["e"]
-
-    //                   console.log("your bet rejected", decodedData)
-    //               }
+      console.log("4", { roundId, userId, amount, currency, balance, errorCode }, decodedData);
+    }
   };
 
   // Start ping interval
@@ -438,7 +442,6 @@ function App() {
 
   // Set game progress
   const setGameProgress = (roundId: number, state: GameStatus) => {
-    console.log("setGameProgress", state);
     setRoundId(roundId);
     setGameStatus(state);
   };
@@ -471,7 +474,6 @@ function App() {
       // c: "USD",
       p: isNaN(autoCashOut) ? 0 : autoCashOut,
     };
-    console.log("BET", data);
 
     const encoded = msgpack.encode(data);
     wsRef.current.send(encoded);
@@ -483,7 +485,6 @@ function App() {
 
     const data = { t: CASH_OUT_REQUEST, r: roundId };
 
-    console.log("CASH OUT", data);
     const encoded = msgpack.encode(data);
     wsRef.current.send(encoded);
   };
