@@ -319,7 +319,6 @@ function App() {
       setWinState({ status: "", data: new Win(0, "", "", 0, 0, 0) });
       setGameProgress(roundId, GameStatus.BETTING_ROUND);
       betRoundStarts();
-
       console.log("18", { roundId, decodedData });
 
       return;
@@ -471,6 +470,7 @@ function App() {
   // Hide countdown elements
   const betRoundEnd = () => {
     setShowCountdown(false);
+    setBetRoundSeconds(5); // fix
     if (countdownIntervalRef.current) {
       clearInterval(countdownIntervalRef.current);
     }
