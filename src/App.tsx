@@ -274,9 +274,9 @@ function App() {
           bet: new Bet(amount, currency, nickname, 0, userId),
         });
 
-        setRoundBetHistory((prev) => [...prev, new Bet(amount, currency, nickname, 0, userId)]);
+        // setRoundBetHistory((prev) => [...prev, new Bet(amount, currency, nickname, 0, userId)]);
       } else {
-        setRoundBetHistory((prev) => [...prev, new Bet(amount, currency, nickname, 0, userId)]);
+        // setRoundBetHistory((prev) => [...prev, new Bet(amount, currency, nickname, 0, userId)]);
       }
 
       console.log("8", { userId, nickname, amount, currency }, decodedData);
