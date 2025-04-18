@@ -18,11 +18,11 @@ body {
 }
 
 /* @media screen and (max-width: 768px) { */
-  .game-frame {
-    height: auto;
-    flex-direction: column-reverse;
-    margin: 0;
-  }
+.game-frame {
+  height: auto;
+  flex-direction: column-reverse;
+  margin: 0;
+}
 /* } */
 
 .game-options {

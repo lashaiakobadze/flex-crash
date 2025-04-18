@@ -44,7 +44,7 @@ const BetHistory: React.FC<BetHistoryProps> = () => {
       </div>
 
       <div className="tab-content" onClick={() => handleTabClick}>
-        {activeTab === "all" && <AllBetsContent  />}
+        {activeTab === "all" && <AllBetsContent />}
         {activeTab === "my" && <MyBetsContent />}
         {activeTab === "top" && <TopBetsContent />}
       </div>

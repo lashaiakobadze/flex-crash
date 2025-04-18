@@ -19,11 +19,7 @@ const GameOptionsTab: React.FC<GameOptionsTabProps> = ({ onTabChange }) => {
   };
 
   return (
-    <div
-      role="tablist"
-      aria-orientation="horizontal"
-      className={styles.tabList}
-    >
+    <div role="tablist" aria-orientation="horizontal" className={styles.tabList}>
       <button
         role="tab"
         aria-selected={selectedOption === GameOptions.MANUAL}

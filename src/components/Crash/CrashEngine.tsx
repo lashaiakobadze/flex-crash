@@ -48,12 +48,7 @@ export class CrashEngine {
   }
 
   public getMultiplierElapsed(multiplier: number) {
-    return (
-      100 *
-      Math.ceil(
-        Math.log(multiplier) / Math.log(Math.E) / CrashEngine.CrashSpeed / 100,
-      )
-    );
+    return 100 * Math.ceil(Math.log(multiplier) / Math.log(Math.E) / CrashEngine.CrashSpeed / 100);
   }
 
   // public getElapsedPayout(elapsedTime: number) {
@@ -65,14 +60,13 @@ export class CrashEngine {
   //   return Math.max(payout, 1);
   // }
 
-
   // Modified getElapsedPayout
   public getElapsedPayout(elapsedTime: number) {
     // Use backend points when available
     if (this.state === CrashEngineState.Active) {
       return this.multiplier;
     }
-    
+
     // Fallback to calculation when no points
     const payout = ~~(100 * Math.pow(Math.E, CrashEngine.CrashSpeed * elapsedTime)) / 100;
     return Math.max(payout, 1);
@@ -91,18 +85,15 @@ export class CrashEngine {
       clearTimeout(this.lagTimeout);
     }
 
-    this.lagTimeout = setTimeout(
-      this.checkForLag,
-      CrashEngine.PredictingLapse,
-    ) as any as number;
+    this.lagTimeout = setTimeout(this.checkForLag, CrashEngine.PredictingLapse) as any as number;
   }
 
-    // Add currentTime tracking
+  // Add currentTime tracking
   public currentTime = 0;
 
   public updateFromPoints(points: number | null) {
     this.currentTime = Date.now();
-    
+
     if (points === null) {
       this.state = CrashEngineState.Loading;
       this.multiplier = 1;
@@ -116,14 +107,14 @@ export class CrashEngine {
       this.state = CrashEngineState.Active;
       this.multiplier = points;
     }
-    
+
     this.updateAxes();
   }
 
   // Modified tick method
   public tick() {
     this.elapsedTime = this.getElapsedTime();
-    this.updateAxes();  
+    this.updateAxes();
   }
 
   private updateAxes() {
@@ -181,11 +172,7 @@ export class CrashEngine {
   }
 
   public getYMultiplier(yPosition: number) {
-    return (
-      Math.ceil(
-        1000 * (this.yAxis - (yPosition / this.plotHeight) * this.yAxis + 1),
-      ) / 1000
-    );
+    return Math.ceil(1000 * (this.yAxis - (yPosition / this.plotHeight) * this.yAxis + 1)) / 1000;
   }
 
   public getMultiplierY(multiplier: number) {

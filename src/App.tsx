@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import * as msgpack from "msgpack-lite";
-import userIcon from './assets/user-128.svg';
+import userIcon from "./assets/user-128.svg";
 
 import "./App.css";
 // import GameOptionsTab, {
@@ -19,10 +19,7 @@ const BET_REQUEST = 50;
 const CASH_OUT_REQUEST = 52;
 
 // Types
-type WebSocketMessage = {
-  t: number;
-  [key: string]: any;
-};
+type WebSocketMessage = { t: number; [key: string]: any };
 
 export enum GameStatus {
   PLAYING = "PLAYING",
@@ -41,23 +38,30 @@ function App() {
   const [time, setTime] = useState<number>(0);
   const [isAmountInputFocused, setIsAmountInputFocused] = useState(false);
   const [cashOut, setCashOut] = useState<string>("");
-  const [winSate, setWinState] = useState<{status: string, data: Win}>({ status: "", data: new Win(0, "", "", 0, 0, 0) });
-  const [betState, setBetState] = useState<{ status: string, bet: Bet, roundId: number }>({ status: "", roundId: 0, bet: new Bet(0, "", "", 0, 0) });
+  const [winSate, setWinState] = useState<{ status: string; data: Win }>({
+    status: "",
+    data: new Win(0, "", "", 0, 0, 0),
+  });
+  const [betState, setBetState] = useState<{ status: string; bet: Bet; roundId: number }>({
+    status: "",
+    roundId: 0,
+    bet: new Bet(0, "", "", 0, 0),
+  });
   const [isCashOutAmountInputFocused, setIsCashOutAmountInputFocused] = useState(false);
   const [winTimeout, setWinTimeout] = useState<boolean>(null);
   const [betRoundSeconds, setBetRoundSeconds] = useState<number>(0);
-  
-    useEffect(() => {
-      const handleResize = () => {
+
+  useEffect(() => {
+    const handleResize = () => {
       if (window.innerWidth < 420) {
         setDimensions({
-          width: window.innerWidth * 0.9 ,//* 0.9,
-          height: window.innerWidth  //* (4 / 5),
+          width: window.innerWidth * 0.9, //* 0.9,
+          height: window.innerWidth, //* (4 / 5),
         });
       } else {
         setDimensions({
           width: window.innerWidth * 0.7,
-          height: window.innerWidth * 0.5 * (3 / 4), 
+          height: window.innerWidth * 0.5 * (3 / 4),
         });
       }
     };
@@ -66,19 +70,17 @@ function App() {
     handleResize();
 
     // Optionally, add event listener for window resize
-    window.addEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
 
     // Cleanup event listener on component unmount
     return () => {
-      window.removeEventListener('resize', handleResize);
+      window.removeEventListener("resize", handleResize);
     };
   }, []);
 
   // FUNCTIONS
   const saveGameState = () => {
-    const gameState = {
-      amount,
-    };
+    const gameState = { amount };
     localStorage.setItem("gameState", JSON.stringify(gameState));
     localStorage.setItem("betState", JSON.stringify(betState));
   };
@@ -92,7 +94,11 @@ function App() {
       console.log("parsedSavedBetState.roundId", parsedSavedBetState.roundId);
       if (roundId === parsedSavedBetState.roundId) {
         console.log("Loading saved bet state:", parsedSavedBetState);
-        setBetState({ status: parsedSavedBetState.status, roundId: parsedSavedBetState.roundId, bet: parsedSavedBetState.bet });
+        setBetState({
+          status: parsedSavedBetState.status,
+          roundId: parsedSavedBetState.roundId,
+          bet: parsedSavedBetState.bet,
+        });
       }
     }
     if (savedGameState) {
@@ -114,9 +120,7 @@ function App() {
     setAmount(+value); // Keep it as a string to handle cases like '5.'
   };
 
-  const handleCashOutAmountChange = (
-    e: React.ChangeEvent<HTMLInputElement>,
-  ) => {
+  const handleCashOutAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let value = e.target.value;
 
     // Allow only numbers and a single decimal point
@@ -145,9 +149,7 @@ function App() {
   const [uid] = useState<number>(Date.now());
   const [latency, setLatency] = useState<number>(0);
   const [onlineUsers, setOnlineUsers] = useState<number>(0);
-  const [gameStatus, setGameStatus] = useState<GameStatus>(
-    GameStatus.BETTING_ROUND,
-  );
+  const [gameStatus, setGameStatus] = useState<GameStatus>(GameStatus.BETTING_ROUND);
   const [points, setPoints] = useState<number>(0);
   const [roundId, setRoundId] = useState<number>(0);
   const [showCountdown, setShowCountdown] = useState<boolean>(false);
@@ -161,7 +163,7 @@ function App() {
   const countdownStartedRef = useRef<boolean>(false);
 
   // const WS_URL = `ws://localhost:5000/connect?user_id=${uid}`;
-  const WS_URL = "wss://crash.flexgaming.net/connect?is_dev=true&user_id=" + uid; // 
+  const WS_URL = "wss://crash.flexgaming.net/connect?is_dev=true&user_id=" + uid; //
 
   // WebSocket connection management
   const connectWebSocket = () => {
@@ -251,7 +253,11 @@ function App() {
       const nickname = decodedData["n"];
       const amount = parseInt(decodedData["a"]);
       const currency = decodedData["c"];
-      setBetState({ status: "placed", roundId, bet: new Bet(amount, currency, nickname, 0, userId) });
+      setBetState({
+        status: "placed",
+        roundId,
+        bet: new Bet(amount, currency, nickname, 0, userId),
+      });
       return;
     }
 
@@ -279,7 +285,7 @@ function App() {
     // Betting round starts
     if (decodedData["t"] === 18) {
       console.log("Betting round starts", decodedData);
-      
+
       const roundId = parseInt(decodedData["r"]);
 
       setBetState({ status: "", roundId, bet: new Bet(0, "", "", 0, 0) });
@@ -293,8 +299,8 @@ function App() {
     // Betting round ends
     if (decodedData["t"] === 19) {
       console.log("Betting round ends", decodedData);
-      if (betState.status === 'placed') {
-        setBetState( () => ({ status: "placed", roundId, bet: betState.bet }) );
+      if (betState.status === "placed") {
+        setBetState(() => ({ status: "placed", roundId, bet: betState.bet }));
       }
       const roundId = parseInt(decodedData["r"]);
       setGameProgress(roundId, GameStatus.END_BETTING_ROUND);
@@ -331,17 +337,6 @@ function App() {
       return;
     }
 
-    //     if (decodedData["t"] === 22) {
-    //     let roundId = parseInt(decodedData["r"])
-    //     let points = parseFloat(decodedData["p"])
-    //     let elapsed = parseInt(decodedData["e"]) //elapsed ms
-
-    //     setPointsUp(points)
-    //     if(_roundState !== "PLAYING") {
-    //         setGameProgress(roundId, "PLAYING")
-    //     }
-    // }
-
     // Rocket exploded (broadcast to all)
     if (decodedData["t"] === 24) {
       console.log("Rocket exploded", decodedData);
@@ -376,37 +371,37 @@ function App() {
       return;
     }
 
-//         if (decodedData["t"] === 30) {
-//                   let roundId = parseInt(decodedData["r"])
-//                   let p = parseInt(decodedData["p"])
-//                   let s = parseInt(decodedData["s"]) // 0= upcoming, 1=current, 4= finished, 5= canceled
-//                   console.log(decodedData)
-//         }
-    
-// // ეს თამაშების ისტორიისთვის და
-// // და ეს 2 ივენთი კიდე:
-// // / ფსონი თუ დაიდება მოვა ეს ივენთი (მხოლოდ იუზერს ეგზავნება)
-//               if (decodedData["t"] === 2) {
-//                  let roundId = parseInt(decodedData["r"]);
-//                  let userId = parseInt(decodedData["u"]);
-//                  let amount = parseInt(decodedData["a"])
-//                  let currency = decodedData["c"]
-//                  let balance = decodedData["b"]
+    //         if (decodedData["t"] === 30) {
+    //                   let roundId = parseInt(decodedData["r"])
+    //                   let p = parseInt(decodedData["p"])
+    //                   let s = parseInt(decodedData["s"]) // 0= upcoming, 1=current, 4= finished, 5= canceled
+    //                   console.log(decodedData)
+    //         }
 
-//                   console.log("your bet accepted", decodedData)
-//               }
+    // // ეს თამაშების ისტორიისთვის და
+    // // და ეს 2 ივენთი კიდე:
+    // // / ფსონი თუ დაიდება მოვა ეს ივენთი (მხოლოდ იუზერს ეგზავნება)
+    //               if (decodedData["t"] === 2) {
+    //                  let roundId = parseInt(decodedData["r"]);
+    //                  let userId = parseInt(decodedData["u"]);
+    //                  let amount = parseInt(decodedData["a"])
+    //                  let currency = decodedData["c"]
+    //                  let balance = decodedData["b"]
 
-// //               // ფსონი თუ არ დაიდება (მხოლოდ იუზერს ეგზავნება)
-//               if (decodedData["t"] === 4) {
-//                   let roundId = parseInt(decodedData["r"]);
-//                   let userId = parseInt(decodedData["u"]);
-//                   let amount = parseInt(decodedData["a"])
-//                   let currency = decodedData["c"]
-//                   let balance = decodedData["b"]
-//                   let errorCode = decodedData["e"]
+    //                   console.log("your bet accepted", decodedData)
+    //               }
 
-//                   console.log("your bet rejected", decodedData)
-//               }
+    // //               // ფსონი თუ არ დაიდება (მხოლოდ იუზერს ეგზავნება)
+    //               if (decodedData["t"] === 4) {
+    //                   let roundId = parseInt(decodedData["r"]);
+    //                   let userId = parseInt(decodedData["u"]);
+    //                   let amount = parseInt(decodedData["a"])
+    //                   let currency = decodedData["c"]
+    //                   let balance = decodedData["b"]
+    //                   let errorCode = decodedData["e"]
+
+    //                   console.log("your bet rejected", decodedData)
+    //               }
   };
 
   // Start ping interval
@@ -422,7 +417,7 @@ function App() {
         const d = { t: PING_BYTE, x: Date.now() };
         const m = msgpack.encode(d);
         wsRef.current.send(m);
-              console.log("PING", );
+        console.log("PING");
       }
     }, PING_INTERVAL);
   };
@@ -447,7 +442,6 @@ function App() {
     setRoundId(roundId);
     setGameStatus(state);
   };
-
 
   // Show countdown elements
   const betRoundStarts = () => {
@@ -478,7 +472,6 @@ function App() {
       p: isNaN(autoCashOut) ? 0 : autoCashOut,
     };
     console.log("BET", data);
-    
 
     const encoded = msgpack.encode(data);
     wsRef.current.send(encoded);
@@ -486,12 +479,9 @@ function App() {
 
   // Cash out handler
   const handleCashOut = () => {
-    if (roundId < 1 || !wsRef.current || winSate.status === 'won') return;
+    if (roundId < 1 || !wsRef.current || winSate.status === "won") return;
 
-    const data = {
-      t: CASH_OUT_REQUEST,
-      r: roundId,
-    };
+    const data = { t: CASH_OUT_REQUEST, r: roundId };
 
     console.log("CASH OUT", data);
     const encoded = msgpack.encode(data);
@@ -535,23 +525,27 @@ function App() {
             <div className="games-options__content">
               <div className="games-options__actions__btn">
                 {gameStatus === GameStatus.PLAYING ? (
-                    betState.status === 'placed' ? (
-                      <Button
-                        onClick={handleCashOut}
-                        amount={winSate.status === 'won' ? winSate.data.amount.toFixed(2) : (+points * +amount).toFixed(2)}
-                        label={winSate.status === 'won' ? 'You Win!' : "Cash Out"}
-                      />
-                    ) : (
-                      <Button
-                        label="Waiting next round"
-                      />
-                  ) 
+                  betState.status === "placed" ? (
+                    <Button
+                      onClick={handleCashOut}
+                      amount={
+                        winSate.status === "won"
+                          ? winSate.data.amount.toFixed(2)
+                          : (+points * +amount).toFixed(2)
+                      }
+                      label={winSate.status === "won" ? "You Win!" : "Cash Out"}
+                    />
+                  ) : (
+                    <Button label="Waiting next round" />
+                  )
                 ) : (
                   <Button
                     onClick={handleBet}
-                    label={`${betState.status === 'placed' ? 'placed' : 'bet'}`}
+                    label={`${betState.status === "placed" ? "placed" : "bet"}`}
                     amount={`${betRoundSeconds} s`}
-                    disabled={betState.status === 'placed' || gameStatus !== GameStatus.BETTING_ROUND}
+                    disabled={
+                      betState.status === "placed" || gameStatus !== GameStatus.BETTING_ROUND
+                    }
                   />
                 )}
               </div>
@@ -559,13 +553,11 @@ function App() {
               <div className="games-options__actions__configs">
                 <div className="games-options__input">
                   <h2>Amount</h2>
-                  <div
-                    className={`games-options__amount ${isAmountInputFocused ? "focused" : ""}`}
-                    >
+                  <div className={`games-options__amount ${isAmountInputFocused ? "focused" : ""}`}>
                     <input
                       className="amount-input"
                       value={amount}
-                      disabled={betState.status === 'placed'}
+                      disabled={betState.status === "placed"}
                       onChange={handleAmountChange}
                       onFocus={() => setIsAmountInputFocused(true)}
                       onBlur={() => setIsAmountInputFocused(false)}
@@ -577,7 +569,7 @@ function App() {
                         role="button"
                         className="amount-btn"
                         onClick={() => setAmount(+amount / 2)}
-                        disabled={betState.status === 'placed'}
+                        disabled={betState.status === "placed"}
                       >
                         1/2
                       </button>
@@ -585,7 +577,7 @@ function App() {
                         role="button"
                         className="amount-btn"
                         onClick={() => setAmount(+amount * 2)}
-                        disabled={betState.status === 'placed'}
+                        disabled={betState.status === "placed"}
                       >
                         2x
                       </button>
@@ -593,7 +585,7 @@ function App() {
                         role="button"
                         className="amount-btn"
                         onClick={() => setAmount(+amount * 3)}
-                        disabled={betState.status === 'placed'}
+                        disabled={betState.status === "placed"}
                       >
                         3x
                       </button>
@@ -602,25 +594,24 @@ function App() {
                 </div>
 
                 {/* {gameMode === GameOptions.AUTO && ( */}
-                  <div className="games-options__input">
-                    <h2>Auto Cash Out</h2>
-                    <div
-                      className={`games-options__amount ${isCashOutAmountInputFocused ? "focused" : ""}`}
-                      >
-                      <input
-                        className="amount-input amount-input--auto"
-                        value={cashOut}
-                        onChange={handleCashOutAmountChange}
-                        onFocus={() => setIsCashOutAmountInputFocused(true)}
-                        onBlur={() => setIsCashOutAmountInputFocused(false)}
-                        placeholder="Set cash out amount"
-                        disabled={betState.status === 'placed'}
-                      />
-                    </div>
-                  </ div>
+                <div className="games-options__input">
+                  <h2>Auto Cash Out</h2>
+                  <div
+                    className={`games-options__amount ${isCashOutAmountInputFocused ? "focused" : ""}`}
+                  >
+                    <input
+                      className="amount-input amount-input--auto"
+                      value={cashOut}
+                      onChange={handleCashOutAmountChange}
+                      onFocus={() => setIsCashOutAmountInputFocused(true)}
+                      onBlur={() => setIsCashOutAmountInputFocused(false)}
+                      placeholder="Set cash out amount"
+                      disabled={betState.status === "placed"}
+                    />
+                  </div>
+                </div>
                 {/* )} */}
               </div>
-              
             </div>
           </div>
         </div>
@@ -632,7 +623,7 @@ function App() {
           <div className="game-stats">
             <div className="game-stats__item">
               <div className="game-stats__item__icon">
-                <img  src={userIcon} alt="user-icon" width={16} height={16} />:
+                <img src={userIcon} alt="user-icon" width={16} height={16} />:
               </div>
               <span>{onlineUsers}</span>
             </div>
@@ -651,18 +642,23 @@ function App() {
           />
 
           <div className="game-content__status">
-              <h1 style={{ margin: "10px 0 0 0", fontSize: "48px" }}>
-                { showCountdown ? "left " + betRoundSeconds + 's' : betState.status === 'lost' ? 'Crashed' : points.toFixed(2) + "x"  }{}
-              </h1>
+            <h1 style={{ margin: "10px 0 0 0", fontSize: "48px" }}>
+              {showCountdown
+                ? "left " + betRoundSeconds + "s"
+                : betState.status === "lost"
+                  ? "Crashed"
+                  : points.toFixed(2) + "x"}
+              {}
+            </h1>
           </div>
 
-            {betState.status === 'won' && winTimeout && (
-              <div className="game-content__win visible">
-                <span>
-                  Win {winSate.data.amount.toFixed(2)} {winSate.data.currency}!
-                </span>
-              </div>
-           )} 
+          {betState.status === "won" && winTimeout && (
+            <div className="game-content__win visible">
+              <span>
+                Win {winSate.data.amount.toFixed(2)} {winSate.data.currency}!
+              </span>
+            </div>
+          )}
 
           {/* width={800} height={600} */}
         </div>

@@ -9,7 +9,7 @@ interface CrashCanvasProps {
   // drawCaption?: boolean;
 
   points?: number;
-  
+
   time?: number;
 
   gameStatus?: GameStatus;
@@ -88,10 +88,7 @@ const CrashCanvas: React.FC<CrashCanvasProps> = ({
         const subStepOffset = stepOffset * stepScale;
         const subSteps = Math.max(
           2,
-          Math.min(
-            16,
-            ~~(subStepOffset / Math.max(3, engine.yAxis / stepOffset)),
-          ),
+          Math.min(16, ~~(subStepOffset / Math.max(3, engine.yAxis / stepOffset)))
         );
 
         for (
@@ -112,25 +109,19 @@ const CrashCanvas: React.FC<CrashCanvasProps> = ({
 
           // Draw caption
           const labelText =
-            engine
-              .getYMultiplier(positionY)
-              .toFixed(engine.multiplier > 2 ? 0 : 1) + "x";
+            engine.getYMultiplier(positionY).toFixed(engine.multiplier > 2 ? 0 : 1) + "x";
           const textSize = ctx.measureText(labelText);
           ctx.fillText(
             labelText,
             positionX + 5,
-            positionY +
-              (textSize.actualBoundingBoxAscent +
-                textSize.actualBoundingBoxDescent) /
-                2,
+            positionY + (textSize.actualBoundingBoxAscent + textSize.actualBoundingBoxDescent) / 2
           );
 
           // Draw substeps
           for (let o = 1; o < subSteps; o++) {
             const isMiddleSubStep = o === subSteps / 2;
             const subStepWidth = isMiddleSubStep ? 12 : 7;
-            const subStepPositionY =
-              0.5 + ~~(positionY + (subStepOffset / subSteps) * o);
+            const subStepPositionY = 0.5 + ~~(positionY + (subStepOffset / subSteps) * o);
 
             // Draw ticker
             ctx.beginPath();
@@ -185,7 +176,7 @@ const CrashCanvas: React.FC<CrashCanvasProps> = ({
     };
   }, [isMounted, gameStatus]);
 
-    // Add effect to update engine when points change
+  // Add effect to update engine when points change
   React.useEffect(() => {
     if (engineRef.current) {
       engineRef.current.updateFromPoints(points);
@@ -212,12 +203,7 @@ const CrashCanvas: React.FC<CrashCanvasProps> = ({
 
   return (
     <div>
-      <canvas
-        style={{ background: "#000" }}
-        ref={canvasRef}
-        width={width}
-        height={height}
-      />
+      <canvas style={{ background: "#000" }} ref={canvasRef} width={width} height={height} />
     </div>
   );
 };

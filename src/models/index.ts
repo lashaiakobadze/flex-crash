@@ -1,2 +1,2 @@
-export * from './win.semantic';
-export * from './bet.semantic';
+export * from "./win.semantic";
+export * from "./bet.semantic";
