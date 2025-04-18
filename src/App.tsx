@@ -585,14 +585,14 @@ function App() {
             />
 
             <div className="game-content__status">
-              <h1 style={{ margin: "10px 0 0 0", fontSize: "48px" }}>
+              <span>
                 {showCountdown
                   ? "left " + betRoundSeconds + "s"
                   : betState.status === "lost"
                     ? "Crashed"
                     : points.toFixed(2) + "x"}
                 {}
-              </h1>
+              </span>
             </div>
 
             {betState.status === "won" && winTimeout && (
