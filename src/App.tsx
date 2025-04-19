@@ -470,7 +470,7 @@ function App() {
   // Hide countdown elements
   const betRoundEnd = () => {
     setShowCountdown(false);
-    setBetRoundSeconds(5); // fix
+    setBetRoundSeconds(0);
     if (countdownIntervalRef.current) {
       clearInterval(countdownIntervalRef.current);
     }
@@ -544,7 +544,7 @@ function App() {
               <div className="game-stats__left">
                 <div className="game-stats__item">
                   <div className="game-stats__item__icon">
-                    <Icon type="user" size={16} />:
+                    <Icon type="user" size={18} />:
                   </div>
                   <span>{onlineUsers}</span>
                 </div>
@@ -586,8 +586,8 @@ function App() {
 
             <div className="game-content__status">
               <span>
-                {showCountdown
-                  ? "left " + betRoundSeconds + "s"
+                {showCountdown && +betRoundSeconds > 0
+                  ? "left " + (+betRoundSeconds - 1) + "s"
                   : betState.status === "lost"
                     ? "Crashed"
                     : points.toFixed(2) + "x"}
@@ -627,7 +627,7 @@ function App() {
                     <Button
                       onClick={handleBet}
                       label={`${betState.status === "placed" ? "placed" : "bet"}`}
-                      amount={`${betRoundSeconds} s`}
+                      amount={`${betRoundSeconds - 1} s`}
                       disabled={
                         betState.status === "placed" || gameStatus !== GameStatus.BETTING_ROUND
                       }
