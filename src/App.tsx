@@ -335,7 +335,7 @@ function App() {
         });
       }
 
-      setCurrentBets((prev) => [...prev, newBet]);
+      addNewBet(newBet);
       console.log(8, "New bet placed", newBet, decodedData);
       return;
     }
@@ -353,9 +353,7 @@ function App() {
         roundId: currentRound?.r,
       };
 
-      setCurrentBets((prev) =>
-        prev.map((bet) => (bet.userId === wonBet.userId ? { ...bet, ...wonBet } : bet))
-      );
+      updateWinningBet(wonBet);
 
       // Handle player-specific win state
       if (wonBet.userId === player?.playerId) {
@@ -566,6 +564,25 @@ function App() {
       (round) => round.s === RoundStatus.CURRENT || round.s === RoundStatus.UPCOMING
     );
     if (currentRound) setCurrentRound(currentRound);
+  };
+
+  // Utility function to sort and limit bets
+  const processBets = (bets: Bet[]): Bet[] => {
+    return [...bets]
+      .sort((a, b) => b.amount - a.amount) // Sort by amount (highest first)
+      .slice(0, 50); // Keep only first 50
+  };
+
+  // 1. When adding new bets
+  const addNewBet = (newBet: Bet) => {
+    setCurrentBets((prev) => processBets([...prev, newBet]));
+  };
+
+  // 2. When updating winning bets
+  const updateWinningBet = (wonBet: Bet) => {
+    setCurrentBets((prev) =>
+      processBets(prev.map((bet) => (bet.userId === wonBet.userId ? { ...bet, ...wonBet } : bet)))
+    );
   };
 
   const setRoundIdAndRef = useCallback((newId: number) => {
