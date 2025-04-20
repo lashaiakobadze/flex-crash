@@ -15,6 +15,8 @@ import { Icon } from "./ui/Icon";
 import { Dropdown } from "./components/Dropdown/Dropdown";
 import BetHistory from "./components/BetHistory/BetHistory";
 import Wins from "./components/Wins/Wins";
+import { useAuth } from "./context/AuthContext";
+import { Round, RoundStatus } from "./models/round-history";
 
 // Constants
 const PING_INTERVAL = 8000;
@@ -53,25 +55,43 @@ function App() {
   });
   const [isCashOutAmountInputFocused, setIsCashOutAmountInputFocused] = useState(false);
   const [winTimeout, setWinTimeout] = useState<boolean>(null);
-  const [betRoundSeconds, setBetRoundSeconds] = useState<number>(0);
 
-  const [roundBetHistory, setRoundBetHistory] = useState<any[]>([
-    { multiplier: 0 },
-    { multiplier: 1.5 },
-    { multiplier: 2 },
-    { multiplier: 0 },
-    { multiplier: 1.5 },
-    { multiplier: 2 },
-    { multiplier: 0 },
-    { multiplier: 1.5 },
-    { multiplier: 2 },
-    { multiplier: 0 },
-    { multiplier: 1.5 },
-    { multiplier: 2 },
-    { multiplier: 0 },
-    { multiplier: 1.5 },
-    { multiplier: 2 },
-  ]);
+  const [countdown, setCountdown] = useState(0); // Stores remaining time in milliseconds
+
+  const [roundBetHistory, setRoundBetHistory] = useState<Round[]>([]);
+  const [currentRound, setCurrentRound] = useState<Round | null>(null);
+
+  const [currentBets, setCurrentBets] = useState<Bet[]>([]);
+
+  const { player, setPlayerData } = useAuth();
+
+  // const playerRef = useRef(player);
+  // useEffect(() => {
+  //   playerRef.current = player;
+  // }, [player]);
+
+  useEffect(() => {
+    if (countdown <= 0) return;
+
+    const interval = setInterval(() => {
+      setCountdown((prev) => {
+        const newTime = prev - 100; // Decrease by 100ms (0.1s)
+        return newTime >= 0 ? newTime : 0;
+      });
+    }, 100); // Update every 100ms
+
+    return () => clearInterval(interval);
+  }, [countdown]);
+
+  const startCountdown = (durationSeconds: number) => {
+    setCountdown(durationSeconds * 1000);
+    setShowCountdown(true);
+  };
+
+  const formatCountdown = (ms: number) => {
+    const seconds = (ms / 1000).toFixed(1); // Shows 1 decimal place
+    return `${seconds}`;
+  };
 
   useEffect(() => {
     const handleResize = () => {
@@ -165,7 +185,6 @@ function App() {
 
   /// CRASH GAME ///
   // State
-  const [user, setUser] = useState<{ id: number; name: string }>({ id: 1998, name: "test_payer" });
   const [latency, setLatency] = useState<number>(0);
   const [onlineUsers, setOnlineUsers] = useState<number>(0);
   const [gameStatus, setGameStatus] = useState<GameStatus>(GameStatus.BETTING_ROUND);
@@ -176,13 +195,11 @@ function App() {
   // Refs
   const wsRef = useRef<WebSocket | null>(null);
   const pingTimeoutRef = useRef<any | null>(null);
-  const reconnectTimeoutRef = useRef<number>(2000);
+  const reconnectTimeoutRef = useRef<number>(2000); // ???
   const reconnectAttemptRef = useRef<any | null>(null);
-  const countdownIntervalRef = useRef<any | null>(null);
-  const countdownStartedRef = useRef<boolean>(false);
 
-  // const WS_URL = `ws://localhost:5000/connect?user_id=${uid}`;
-  const WS_URL = "wss://crash.flexgaming.net/connect?is_dev=true&user_id=" + user.id;
+  const WS_URL =
+    "wss://crash.flexgaming.net/launch?game_id=crash&user=example_user_id&token=operator_token_example&currency=USD&free_play=1"; //  is_dev=true&user_id= +
 
   // WebSocket connection management
   const connectWebSocket = () => {
@@ -190,8 +207,6 @@ function App() {
 
     wsRef.current.onopen = () => {
       console.log("Connected to WebSocket");
-
-      setUser({ id: 1998, name: "test_payer" });
       startPing(true);
       reconnectTimeoutRef.current = 3000;
     };
@@ -229,6 +244,18 @@ function App() {
 
   // Handle incoming WebSocket messages
   const handleWebSocketMessage = (decodedData: WebSocketMessage) => {
+    // user info
+    if (decodedData["t"] === 1) {
+      const avatarUrl = parseInt(decodedData["a"]);
+      const balance = parseInt(decodedData["b"]);
+      const playerId = parseInt(decodedData["i"]);
+      const nickname = decodedData["n"];
+      const seed = decodedData["s"];
+
+      console.log("1: user info ", { playerId, nickname, balance, seed, avatarUrl }, decodedData);
+      setPlayerData({ playerId, nickname, balance, seed });
+    }
+
     // Ping response (measure latency)
     if (decodedData["t"] === PING_BYTE) {
       console.log("PING response (measure latency)", decodedData);
@@ -241,10 +268,16 @@ function App() {
     // Bet placed (only to user)
     if (decodedData["t"] === 2) {
       const userId = parseInt(decodedData["u"]);
-      const amount = parseInt(decodedData["a"]); // fix amount is empty
+      const amount = parseInt(decodedData["a"]);
       const currency = decodedData["c"];
       const balance = decodedData["b"];
       const roundId = parseInt(decodedData["r"]);
+
+      setBetState({
+        status: "placed",
+        roundId,
+        bet: new Bet(amount, currency, player.nickname, 0, userId),
+      });
 
       console.log("2", { userId, amount, currency, balance, roundId }, decodedData);
       return;
@@ -255,58 +288,77 @@ function App() {
       const userId = parseInt(decodedData["u"]);
       const amount = parseInt(decodedData["a"]);
       const currency = decodedData["c"];
+      let roundId = parseInt(decodedData["r"]);
+      let balance = decodedData["b"];
+      let errorCode = decodedData["e"]; // handle errors from here
 
-      console.log("4", { userId, amount, currency }, decodedData);
+      console.log("4", { userId, amount, currency, roundId, balance, errorCode }, decodedData);
       return;
     }
 
     // Bet placed (broadcast to all)
     if (decodedData["t"] === 8) {
-      const userId = parseInt(decodedData["u"]);
-      const nickname = decodedData["n"];
-      const amount = parseInt(decodedData["a"]);
-      const currency = decodedData["c"];
+      const newBet: Bet = {
+        userId: parseInt(decodedData["u"]),
+        nickname: decodedData["n"],
+        amount: parseInt(decodedData["a"]),
+        currency: decodedData["c"],
+        status: "placed",
+        time: Date.now(),
+        roundId: currentRound?.r,
+      };
 
-      if (userId === user.id) {
+      console.log("newBet.userId === player.playerId", newBet.userId, player.playerId);
+      if (newBet.userId === player.playerId) {
         setBetState({
           status: "placed",
           roundId,
-          bet: new Bet(amount, currency, nickname, 0, userId),
+          bet: new Bet(amount, newBet.currency, player.nickname, 0, newBet.userId),
         });
-
-        // setRoundBetHistory((prev) => [...prev, new Bet(amount, currency, nickname, 0, userId)]);
-      } else {
-        setRoundBetHistory([]);
       }
 
-      console.log("8", { userId, nickname, amount, currency }, decodedData);
-      console.log("bet history", roundBetHistory);
-
+      setCurrentBets((prev) => [...prev, newBet]);
+      console.log(8, "New bet placed", newBet, decodedData);
       return;
     }
 
     // Player won (broadcast to all)
     if (decodedData["t"] === 10) {
-      const userId = parseInt(decodedData["u"]);
-      const nickname = decodedData["n"];
-      const amount = parseInt(decodedData["a"]);
-      const currency = decodedData["c"];
-      const points = parseFloat(decodedData["p"]);
+      const wonBet: Bet = {
+        userId: parseInt(decodedData["u"]),
+        nickname: decodedData["n"],
+        amount: parseInt(decodedData["a"]),
+        currency: decodedData["c"],
+        points: parseFloat(decodedData["p"]),
+        status: "won",
+        time: Date.now(),
+        roundId: currentRound?.r,
+      };
 
-      if (userId === user.id) {
+      setCurrentBets((prev) =>
+        prev.map((bet) => (bet.userId === wonBet.userId ? { ...bet, ...wonBet } : bet))
+      );
+
+      // Handle player-specific win state
+      if (wonBet.userId === player?.playerId) {
         setWinState({
           status: "won",
-          data: new Win(amount, currency, nickname, points, 0, userId),
+          data: new Win(
+            wonBet.amount,
+            wonBet.currency,
+            wonBet.nickname,
+            wonBet.points,
+            0,
+            wonBet.userId
+          ),
         });
+
         setBetState({ status: "won", roundId, bet: betState.bet });
         setWinTimeout(true);
-
-        setTimeout(() => {
-          setWinTimeout(false);
-        }, 2000);
+        setTimeout(() => setWinTimeout(false), 3000);
       }
 
-      console.log("10", { userId, nickname, amount, currency, points }, decodedData);
+      console.log(10, "Bet won", wonBet, decodedData);
 
       return;
     }
@@ -314,12 +366,12 @@ function App() {
     // Betting round starts
     if (decodedData["t"] === 18) {
       const roundId = parseInt(decodedData["r"]);
+      const secondBeforeStart = parseInt(decodedData["s"]);
 
-      setBetState({ status: "", roundId, bet: new Bet(0, "", "", 0, 0) });
-      setWinState({ status: "", data: new Win(0, "", "", 0, 0, 0) });
+      setCurrentBets([]);
+      startCountdown(secondBeforeStart);
       setGameProgress(roundId, GameStatus.BETTING_ROUND);
-      betRoundStarts();
-      console.log("18", { roundId, decodedData });
+      console.log("18", { roundId, decodedData }); // betting round starts time form here
 
       return;
     }
@@ -332,7 +384,7 @@ function App() {
 
       const roundId = parseInt(decodedData["r"]);
       setGameProgress(roundId, GameStatus.END_BETTING_ROUND);
-      betRoundEnd();
+      setShowCountdown(false);
 
       console.log("19", { roundId, decodedData });
 
@@ -369,16 +421,20 @@ function App() {
 
     // Rocket exploded (broadcast to all)
     if (decodedData["t"] === 24) {
-      const roundId = parseInt(decodedData["r"]);
-      const points = parseFloat(decodedData["p"]);
-      const sequence = parseInt(decodedData["q"]);
+      const finishedRound: Round = {
+        r: parseInt(decodedData["r"]),
+        p: decodedData["p"].toString(),
+        s: RoundStatus.FINISHED,
+      };
 
-      setPoints(points);
-      setBetState({ status: "lost", roundId, bet: betState.bet });
-      setGameProgress(roundId, GameStatus.CANCELLED);
+      handleRoundData([finishedRound]);
 
-      console.log("24", { roundId, points, sequence }, decodedData);
-      return;
+      // Update game state
+      setPoints(parseFloat(decodedData["p"]));
+      setBetState({ status: "lost", roundId: finishedRound.r, bet: betState.bet });
+      setGameProgress(finishedRound.r, GameStatus.CANCELLED);
+
+      console.log(24, "Round finished", finishedRound);
     }
 
     // Online users count (broadcast to all)
@@ -393,23 +449,25 @@ function App() {
     // Bet round timer (broadcast to all)
     if (decodedData["t"] === 28) {
       const roundId = parseInt(decodedData["r"]);
-      const seconds = parseInt(decodedData["w"]); // fix seconds are send only
+      const secondBeforeStart = parseInt(decodedData["w"]); // fix secondBeforeStart are send only
 
-      setBetRoundSeconds(seconds);
+      setWinState({ status: "", data: new Win(0, "", "", 0, 0, 0) });
+      if (!countdown) {
+        console.log("Bet round timer", secondBeforeStart);
+        startCountdown(secondBeforeStart);
+      }
       setRoundId(roundId);
 
-      console.log("28", { roundId, seconds }, decodedData);
+      console.log("28", { roundId, secondBeforeStart }, decodedData);
       return;
     }
 
-    // ???
-    // if (decodedData["t"] === 30) {
-    //   let roundId = parseInt(decodedData["r"]);
-    //   let p = parseInt(decodedData["p"]);
-    //   let s = parseInt(decodedData["s"]); // 0= upcoming, 1=current, 4= finished, 5= canceled
-
-    //   console.log("30", decodedData);
-    // }
+    // Message type 30 (initial/bulk round data)
+    if (decodedData["t"] === 30) {
+      const roundsData: Round[] = decodedData["d"] || [];
+      handleRoundData(roundsData);
+      console.log(30, "Initial rounds loaded", roundsData);
+    }
 
     // ფსონი თუ არ დაიდება (მხოლოდ იუზერს ეგზავნება)
     if (decodedData["t"] === 4) {
@@ -456,25 +514,34 @@ function App() {
   //   }, reconnectTimeoutRef.current);
   // };
 
+  const handleRoundData = (roundsData: Round[]) => {
+    setRoundBetHistory((prevRounds) => {
+      const roundMap = new Map<number, Round>();
+
+      prevRounds.forEach((round) => roundMap.set(round.r, round));
+
+      roundsData.forEach((round) => {
+        if (round.s === RoundStatus.FINISHED) {
+          roundMap.set(round.r, round);
+        }
+      });
+
+      return Array.from(roundMap.values())
+        .filter((round) => round.s === RoundStatus.FINISHED) // Final filter
+        .sort((a, b) => b.r - a.r);
+    });
+
+    // Track current round separately
+    const currentRound = roundsData.find(
+      (round) => round.s === RoundStatus.CURRENT || round.s === RoundStatus.UPCOMING
+    );
+    if (currentRound) setCurrentRound(currentRound);
+  };
+
   // Set game progress
   const setGameProgress = (roundId: number, state: GameStatus) => {
     setRoundId(roundId);
     setGameStatus(state);
-  };
-
-  // Show countdown elements
-  const betRoundStarts = () => {
-    setShowCountdown(true);
-  };
-
-  // Hide countdown elements
-  const betRoundEnd = () => {
-    setShowCountdown(false);
-    setBetRoundSeconds(0);
-    if (countdownIntervalRef.current) {
-      clearInterval(countdownIntervalRef.current);
-    }
-    countdownStartedRef.current = false;
   };
 
   // Place bet handler
@@ -502,6 +569,7 @@ function App() {
 
     const data = { t: CASH_OUT_REQUEST, r: roundId };
 
+    console.log("CASH OUT", data);
     const encoded = msgpack.encode(data);
     wsRef.current.send(encoded);
   };
@@ -521,9 +589,6 @@ function App() {
       if (reconnectAttemptRef.current) {
         clearTimeout(reconnectAttemptRef.current);
       }
-      if (countdownIntervalRef.current) {
-        clearInterval(countdownIntervalRef.current);
-      }
     };
   }, []);
 
@@ -535,7 +600,7 @@ function App() {
     <>
       <div className="game-frame">
         <div className="game-history-container">
-          <BetHistory />
+          <BetHistory currentBets={currentBets} />
         </div>
 
         <div className="game-area">
@@ -567,7 +632,7 @@ function App() {
                 >
                   <ColorPicker />
                 </Dropdown>
-                <span>{user.name}</span>
+                <span>{player.nickname}</span>
               </div>
             </div>
 
@@ -586,11 +651,13 @@ function App() {
 
             <div className="game-content__status">
               <span>
-                {showCountdown && +betRoundSeconds > 0
-                  ? "left " + (+betRoundSeconds - 1) + "s"
-                  : betState.status === "lost"
-                    ? "Crashed"
-                    : points.toFixed(2) + "x"}
+                {showCountdown && countdown > 0 ? (
+                  `Starts in ${formatCountdown(countdown)} s`
+                ) : (
+                  <span style={{ color: betState.status === "lost" ? "red" : "" }}>
+                    {points.toFixed(2)}x{" "}
+                  </span>
+                )}
                 {}
               </span>
             </div>
@@ -626,8 +693,7 @@ function App() {
                   ) : (
                     <Button
                       onClick={handleBet}
-                      label={`${betState.status === "placed" ? "placed" : "bet"}`}
-                      amount={`${betRoundSeconds - 1} s`}
+                      label={`${betState.status === "placed" ? "Placed" : "Bet"}`}
                       disabled={
                         betState.status === "placed" || gameStatus !== GameStatus.BETTING_ROUND
                       }

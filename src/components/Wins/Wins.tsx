@@ -2,9 +2,10 @@ import React from "react";
 import styles from "./Wins.module.css";
 import { useColor } from "../../context/ColorContext";
 import { darkenColor, lightenColor } from "../../utils/colorUtils";
+import { Round } from "../../models/round-history";
 
 interface WinsProps {
-  history: { multiplier: number }[];
+  history: Round[];
 }
 
 const Wins: React.FC<WinsProps> = ({ history }) => {
@@ -30,11 +31,11 @@ const Wins: React.FC<WinsProps> = ({ history }) => {
         <div className={styles.slider}>
           {history.map((item, index) => (
             <div
-              key={`${item.multiplier}-${index}-${Date.now()}`}
+              key={`${item.p}-${index}-${Date.now()}`}
               className={styles.item}
-              style={getItemStyle(item.multiplier)}
+              style={getItemStyle(+item.p)}
             >
-              {item.multiplier.toFixed(2)}x
+              {item.p}x
             </div>
           ))}
         </div>

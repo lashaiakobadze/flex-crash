@@ -37,7 +37,7 @@
   border: none;
   color: #9ea0a3;
   padding: 0;
-  width: 33%;
+  width: 50%;
 }
 
 .tab.active {
@@ -49,4 +49,58 @@
   background: rgb(44, 45, 48);
   border-radius: 10px;
   color: #ffffff;
+}
+
+.bets-list {
+  width: 100%;
+  padding: 10px;
+  color: rgb(var(--primary));
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.bets-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  color: #9ea0a3;
+}
+
+.bets-header__item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.bets-content {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.bets-content__item {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  color: #9ea0a3;
+}
+
+.bets-header__item {
+  width: 33%;
+  display: flex;
+  align-items: center;
+}
+
+.bets-content__item__player,
+.bets-content__item__amount,
+.bets-content__item__cashout {
+  width: 33%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 5px;
 }
