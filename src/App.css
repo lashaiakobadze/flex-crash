@@ -23,8 +23,9 @@ body {
 }
 
 .game-area {
-  width: 80%;
+  width: 70%;
   margin: 20px;
+  margin-left: 0;
 }
 
 @media screen and (max-width: 768px) {
@@ -57,7 +58,7 @@ body {
 
 .game-history-container {
   width: 100%;
-  padding: 12px;
+  padding: 20px 12px;
 }
 
 .games-options__content {
@@ -67,12 +68,6 @@ body {
   flex-direction: column;
   justify-content: flex-start;
   gap: 24px;
-}
-
-@media screen and (max-width: 768px) {
-  .games-options__content {
-    padding-bottom: 40px;
-  }
 }
 
 .games-options__actions__btn {

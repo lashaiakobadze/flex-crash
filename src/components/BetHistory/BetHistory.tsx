@@ -15,7 +15,7 @@ interface BetHistoryProps {
 const BetHistory: React.FC<BetHistoryProps> = ({ currentBets }) => {
   const [activeTab, setActiveTab] = useState<TabType>("all");
 
-  const [headerType, setHeaderType] = React.useState("my");
+  const [headerType, setHeaderType] = React.useState("all");
 
   const handleTabClick = (tab: TabType) => {
     console.log("Tab clicked:", tab);
@@ -34,11 +34,10 @@ const BetHistory: React.FC<BetHistoryProps> = ({ currentBets }) => {
         {header.map((item, index) => (
           <button
             key={index}
-            className={`tab ${headerType === item.type ? "click" : ""}`}
+            className={`tab ${headerType === item.type ? "active" : ""}`}
             onClick={() => {
               setHeaderType(item.type);
               handleTabClick(item.type as TabType);
-              // item.onClick;
             }}
           >
             {item.value}

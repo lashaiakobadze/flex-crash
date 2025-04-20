@@ -45,7 +45,7 @@
   cursor: default;
 }
 
-.click {
+.active {
   background: rgb(44, 45, 48);
   border-radius: 10px;
   color: #ffffff;

@@ -544,6 +544,12 @@ function App() {
     setGameStatus(state);
   };
 
+  const handleNextRoundBet = () => {
+    if (betState.status === "placed") {
+      setBetState({ status: "placed", roundId, bet: betState.bet });
+    }
+  };
+
   // Place bet handler
   const handleBet = () => {
     if (roundId < 1 || !wsRef.current) return;
@@ -567,7 +573,7 @@ function App() {
   const handleCashOut = () => {
     if (roundId < 1 || !wsRef.current || winSate.status === "won") return;
 
-    const data = { t: CASH_OUT_REQUEST, r: roundId };
+    const data = { t: CASH_OUT_REQUEST, r: roundId, a: !!cashOut };
 
     console.log("CASH OUT", data);
     const encoded = msgpack.encode(data);
@@ -683,12 +689,12 @@ function App() {
                         amount={
                           winSate.status === "won"
                             ? winSate.data.amount.toFixed(2)
-                            : (+points * +amount).toFixed(2)
+                            : (+points * +betState.bet.amount).toFixed(2)
                         }
                         label={winSate.status === "won" ? "You Win!" : "Cash Out"}
                       />
                     ) : (
-                      <Button label="Waiting next round" />
+                      <Button label="Bet (next round)" onClick={handleNextRoundBet} />
                     )
                   ) : (
                     <Button
