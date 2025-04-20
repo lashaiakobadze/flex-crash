@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import * as msgpack from "msgpack-lite";
 
 import "./App.css";
@@ -40,10 +40,28 @@ function App() {
   // const [gameMode, setGameMode] = useState<GameOptions>(GameOptions.MANUAL);
   const [dimensions, setDimensions] = useState({ width: 420, height: 320 });
 
+  // State declarations
   const [amount, setAmount] = useState<number>(5);
+  const [cashOut, setCashOut] = useState<string>("");
+  const [roundId, setRoundId] = useState<number>(0);
+  const [nextRoundBetState, setNextRoundBetState] = useState(false);
+
+  // Refs for synchronous access
+  const amountRef = useRef<number>(amount);
+  const cashOutRef = useRef<string>(cashOut);
+  const roundIdRef = useRef<number>(roundId);
+  const nextRoundBetRef = useRef<boolean>(nextRoundBetState);
+
+  // Keep refs in sync with state
+  useEffect(() => {
+    amountRef.current = amount;
+    cashOutRef.current = cashOut;
+    roundIdRef.current = roundId;
+    nextRoundBetRef.current = nextRoundBetState;
+  }, [amount, cashOut, roundId, nextRoundBetState]);
+
   const [time, setTime] = useState<number>(0);
   const [isAmountInputFocused, setIsAmountInputFocused] = useState(false);
-  const [cashOut, setCashOut] = useState<string>("");
   const [winSate, setWinState] = useState<{ status: string; data: Win }>({
     status: "",
     data: new Win(0, "", "", 0, 0, 0),
@@ -53,6 +71,7 @@ function App() {
     roundId: 0,
     bet: new Bet(0, "", "", 0, 0),
   });
+
   const [isCashOutAmountInputFocused, setIsCashOutAmountInputFocused] = useState(false);
   const [winTimeout, setWinTimeout] = useState<boolean>(null);
 
@@ -189,7 +208,6 @@ function App() {
   const [onlineUsers, setOnlineUsers] = useState<number>(0);
   const [gameStatus, setGameStatus] = useState<GameStatus>(GameStatus.BETTING_ROUND);
   const [points, setPoints] = useState<number>(0);
-  const [roundId, setRoundId] = useState<number>(0);
   const [showCountdown, setShowCountdown] = useState<boolean>(false);
 
   // Refs
@@ -371,6 +389,14 @@ function App() {
       setCurrentBets([]);
       startCountdown(secondBeforeStart);
       setGameProgress(roundId, GameStatus.BETTING_ROUND);
+      setRoundIdAndRef(roundId);
+
+      // Now reads the latest value, not a stale one:
+      if (nextRoundBetRef.current) {
+        handleBet();
+        setNextRoundBetState(false);
+      }
+
       console.log("18", { roundId, decodedData }); // betting round starts time form here
 
       return;
@@ -395,7 +421,7 @@ function App() {
     if (decodedData["t"] === 20) {
       const roundId = parseInt(decodedData["r"]);
       const hash = decodedData["h"];
-      setRoundId(roundId);
+      setRoundIdAndRef(roundId);
 
       console.log("20", { roundId, hash }, decodedData);
       return;
@@ -452,11 +478,14 @@ function App() {
       const secondBeforeStart = parseInt(decodedData["w"]); // fix secondBeforeStart are send only
 
       setWinState({ status: "", data: new Win(0, "", "", 0, 0, 0) });
+      console.log("Round id with timer", parseInt(decodedData["r"]));
+
       if (!countdown) {
         console.log("Bet round timer", secondBeforeStart);
         startCountdown(secondBeforeStart);
       }
-      setRoundId(roundId);
+      setRoundIdAndRef(roundId);
+      setGameProgress(roundId, GameStatus.BETTING_ROUND);
 
       console.log("28", { roundId, secondBeforeStart }, decodedData);
       return;
@@ -527,8 +556,9 @@ function App() {
       });
 
       return Array.from(roundMap.values())
-        .filter((round) => round.s === RoundStatus.FINISHED) // Final filter
-        .sort((a, b) => b.r - a.r);
+        .filter((round) => round.s === RoundStatus.FINISHED)
+        .sort((a, b) => b.r - a.r) // Sort by round ID descending (newest first)
+        .slice(0, 50); // Keep only first 50 items
     });
 
     // Track current round separately
@@ -538,28 +568,38 @@ function App() {
     if (currentRound) setCurrentRound(currentRound);
   };
 
+  const setRoundIdAndRef = useCallback((newId: number) => {
+    setRoundId(newId);
+    roundIdRef.current = newId; // Manual sync
+  }, []);
+
   // Set game progress
   const setGameProgress = (roundId: number, state: GameStatus) => {
-    setRoundId(roundId);
+    setRoundIdAndRef(roundId);
     setGameStatus(state);
   };
 
   const handleNextRoundBet = () => {
-    if (betState.status === "placed") {
-      setBetState({ status: "placed", roundId, bet: betState.bet });
-    }
+    setNextRoundBetState((prev) => {
+      const next = !prev;
+      nextRoundBetRef.current = next;
+      return next;
+    });
   };
 
   // Place bet handler
-  const handleBet = () => {
-    if (roundId < 1 || !wsRef.current) return;
+  const handleBet = useCallback(() => {
+    if (roundIdRef.current < 1 || !wsRef.current) return;
 
-    const betAmount = parseFloat(String(amount));
-    const autoCashOut = parseFloat(cashOut);
+    const betAmount = parseFloat(String(amountRef.current));
+    const autoCashOut = parseFloat(cashOutRef.current);
+
+    console.log("handleBet", roundIdRef.current, roundIdRef.current);
+    console.log("handleBet", betAmount, autoCashOut);
 
     const data = {
       t: BET_REQUEST,
-      r: roundId,
+      r: roundIdRef.current,
       a: isNaN(betAmount) ? 0 : betAmount,
       // c: "USD",
       p: isNaN(autoCashOut) ? 0 : autoCashOut,
@@ -567,7 +607,7 @@ function App() {
 
     const encoded = msgpack.encode(data);
     wsRef.current.send(encoded);
-  };
+  }, []);
 
   // Cash out handler
   const handleCashOut = () => {
@@ -660,7 +700,14 @@ function App() {
                 {showCountdown && countdown > 0 ? (
                   `Starts in ${formatCountdown(countdown)} s`
                 ) : (
-                  <span style={{ color: betState.status === "lost" ? "red" : "" }}>
+                  <span
+                    style={{
+                      color:
+                        betState.status === "lost" && gameStatus !== GameStatus.PLAYING
+                          ? "red"
+                          : "",
+                    }}
+                  >
                     {points.toFixed(2)}x{" "}
                   </span>
                 )}
@@ -694,7 +741,10 @@ function App() {
                         label={winSate.status === "won" ? "You Win!" : "Cash Out"}
                       />
                     ) : (
-                      <Button label="Bet (next round)" onClick={handleNextRoundBet} />
+                      <Button
+                        label={nextRoundBetState ? "Cancel" : "Bet (next round)"}
+                        onClick={handleNextRoundBet}
+                      />
                     )
                   ) : (
                     <Button
@@ -716,7 +766,7 @@ function App() {
                       <input
                         className="amount-input"
                         value={amount}
-                        disabled={betState.status === "placed"}
+                        disabled={betState.status === "placed" || nextRoundBetState}
                         onChange={handleAmountChange}
                         onFocus={() => setIsAmountInputFocused(true)}
                         onBlur={() => setIsAmountInputFocused(false)}
@@ -728,7 +778,7 @@ function App() {
                           role="button"
                           className="amount-btn"
                           onClick={() => setAmount(+amount / 2)}
-                          disabled={betState.status === "placed"}
+                          disabled={betState.status === "placed" || nextRoundBetState}
                         >
                           1/2
                         </button>
@@ -736,7 +786,7 @@ function App() {
                           role="button"
                           className="amount-btn"
                           onClick={() => setAmount(+amount * 2)}
-                          disabled={betState.status === "placed"}
+                          disabled={betState.status === "placed" || nextRoundBetState}
                         >
                           2x
                         </button>
@@ -744,7 +794,7 @@ function App() {
                           role="button"
                           className="amount-btn"
                           onClick={() => setAmount(+amount * 3)}
-                          disabled={betState.status === "placed"}
+                          disabled={betState.status === "placed" || nextRoundBetState}
                         >
                           3x
                         </button>
@@ -765,7 +815,7 @@ function App() {
                         onFocus={() => setIsCashOutAmountInputFocused(true)}
                         onBlur={() => setIsCashOutAmountInputFocused(false)}
                         placeholder="Set cash out amount"
-                        disabled={betState.status === "placed"}
+                        disabled={betState.status === "placed" || nextRoundBetState}
                       />
                     </div>
                   </div>
