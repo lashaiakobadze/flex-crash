@@ -765,8 +765,8 @@ function App() {
                     )
                   ) : (
                     <Button
-                      onClick={handleBet}
-                      label={`${betState.status === "placed" ? "Placed" : "Bet"}`}
+                      onClick={nextRoundBetState ? handleNextRoundBet : handleBet}
+                      label={`${betState.status === "placed" ? "Placed" : nextRoundBetState ? "Cancel" : gameStatus === GameStatus.CANCELLED ? "waiting" : "Bet"}`}
                       disabled={
                         betState.status === "placed" || gameStatus !== GameStatus.BETTING_ROUND
                       }
