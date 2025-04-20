@@ -91,6 +91,22 @@ function App() {
   const [currentBets, setCurrentBets] = useState<Bet[]>([]);
 
   useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        // Tab regained focus - check connection
+        if (!wsRef.current || wsRef.current.readyState === WebSocket.CLOSED) {
+          connectWebSocket();
+        }
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, []);
+
+  useEffect(() => {
     if (countdown <= 0) return;
 
     const interval = setInterval(() => {
@@ -509,7 +525,7 @@ function App() {
     }
   };
 
-  // Start ping interval
+  // // Start ping interval
   const startPing = (isFirst: boolean) => {
     if (isFirst && wsRef.current?.readyState === WebSocket.OPEN) {
       const d = { t: PING_BYTE, x: Date.now() };
