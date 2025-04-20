@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 
-interface Player {
+export interface Player {
   playerId: number;
   nickname: string;
   balance: number;

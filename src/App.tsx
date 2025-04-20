@@ -15,7 +15,7 @@ import { Icon } from "./ui/Icon";
 import { Dropdown } from "./components/Dropdown/Dropdown";
 import BetHistory from "./components/BetHistory/BetHistory";
 import Wins from "./components/Wins/Wins";
-import { useAuth } from "./context/AuthContext";
+import { Player } from "./context/AuthContext";
 import { Round, RoundStatus } from "./models/round-history";
 
 // Constants
@@ -41,12 +41,19 @@ function App() {
   const [dimensions, setDimensions] = useState({ width: 420, height: 320 });
 
   // State declarations
+  const [player, setPlayerData] = useState<Player | null>({
+    playerId: 0,
+    nickname: "",
+    balance: 0,
+    seed: "",
+  });
   const [amount, setAmount] = useState<number>(5);
   const [cashOut, setCashOut] = useState<string>("");
   const [roundId, setRoundId] = useState<number>(0);
   const [nextRoundBetState, setNextRoundBetState] = useState(false);
 
   // Refs for synchronous access
+  const playerRef = useRef(player);
   const amountRef = useRef<number>(amount);
   const cashOutRef = useRef<string>(cashOut);
   const roundIdRef = useRef<number>(roundId);
@@ -58,6 +65,7 @@ function App() {
     cashOutRef.current = cashOut;
     roundIdRef.current = roundId;
     nextRoundBetRef.current = nextRoundBetState;
+    playerRef.current = player;
   }, [amount, cashOut, roundId, nextRoundBetState]);
 
   const [time, setTime] = useState<number>(0);
@@ -81,13 +89,6 @@ function App() {
   const [currentRound, setCurrentRound] = useState<Round | null>(null);
 
   const [currentBets, setCurrentBets] = useState<Bet[]>([]);
-
-  const { player, setPlayerData } = useAuth();
-
-  // const playerRef = useRef(player);
-  // useEffect(() => {
-  //   playerRef.current = player;
-  // }, [player]);
 
   useEffect(() => {
     if (countdown <= 0) return;
@@ -128,11 +129,11 @@ function App() {
     handleResize();
 
     // Optionally, add event listener for window resize
-    window.addEventListener("resize", handleResize);
+    window?.addEventListener("resize", handleResize);
 
     // Cleanup event listener on component unmount
     return () => {
-      window.removeEventListener("resize", handleResize);
+      window?.removeEventListener("resize", handleResize);
     };
   }, []);
 
@@ -326,8 +327,7 @@ function App() {
         roundId: currentRound?.r,
       };
 
-      console.log("newBet.userId === player.playerId", newBet.userId, player.playerId);
-      if (newBet.userId === player.playerId) {
+      if (newBet.userId === playerRef.current.playerId) {
         setBetState({
           status: "placed",
           roundId,
@@ -356,7 +356,7 @@ function App() {
       updateWinningBet(wonBet);
 
       // Handle player-specific win state
-      if (wonBet.userId === player?.playerId) {
+      if (wonBet.userId === playerRef.current.playerId) {
         setWinState({
           status: "won",
           data: new Win(
