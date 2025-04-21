@@ -19,7 +19,7 @@ export const fetchTopPoints = async (limit: number = 10): Promise<TopPlayer[]> =
 
 export const fetchGameRound = async (id: string) => {
   try {
-    const response = await axios.get(`https://crash.flexgaming.net/game/game-round?id=${"33733"}`);
+    const response = await axios.get(`https://crash.flexgaming.net/game/game-round?id=${id}`);
     return response.data; // Return the data from the response
   } catch (error) {
     console.error("Error fetching game round:", error);
