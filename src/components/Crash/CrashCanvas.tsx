@@ -60,8 +60,22 @@ const CrashCanvas: React.FC<CrashCanvasProps> = ({
       ctx.lineWidth = 2;
       ctx.moveTo(0, engine.plotHeight);
       const a = engine.getElapsedPosition(engine.elapsedTime);
-      const b = engine.getElapsedPosition(engine.elapsedTime / 2);
-      ctx.quadraticCurveTo(b.x, b.y, a.x, a.y);
+      // const b = engine.getElapsedPosition(engine.elapsedTime);
+      // ctx.quadraticCurveTo(b.x, b.y, a.x, a.y);
+      ctx.stroke();
+
+      if (a.y > 1.5) {
+        // Create concave-down curve (frown shape)
+        // Use midpoint for control point but raise it up
+        const controlX = (0 + a.x) / 2; // Midpoint between start and end
+        const controlY = engine.plotHeight + 10; // Adjust this value for curve depth
+
+        ctx.quadraticCurveTo(controlX, controlY, a.x, a.y);
+      } else {
+        // Draw straight horizontal line
+        ctx.lineTo(a.x, engine.plotHeight); // Maintains constant Y (flat line)
+      }
+
       ctx.stroke();
 
       // Draw caption
