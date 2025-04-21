@@ -17,6 +17,7 @@ import BetHistory from "./components/BetHistory/BetHistory";
 import Wins from "./components/Wins/Wins";
 import { Player } from "./context/AuthContext";
 import { Round, RoundStatus } from "./models/round-history";
+import { truncateNickname } from "./utils/format";
 
 // Constants
 const PING_INTERVAL = 8000;
@@ -89,6 +90,7 @@ function App() {
   const [currentRound, setCurrentRound] = useState<Round | null>(null);
 
   const [currentBets, setCurrentBets] = useState<Bet[]>([]);
+  const [totalBets, setTotalBets] = useState<{ count: number; totalBetAmount: number }>();
 
   useEffect(() => {
     const handleVisibilityChange = () => {
@@ -401,6 +403,7 @@ function App() {
       const secondBeforeStart = parseInt(decodedData["s"]);
 
       setCurrentBets([]);
+      setTotalBets({ count: 0, totalBetAmount: 0 });
       startCountdown(secondBeforeStart);
       setGameProgress(roundId, GameStatus.BETTING_ROUND);
       setRoundIdAndRef(roundId);
@@ -584,6 +587,11 @@ function App() {
 
   // Utility function to sort and limit bets
   const processBets = (bets: Bet[]): Bet[] => {
+    setTotalBets({
+      count: bets.length,
+      totalBetAmount: bets.reduce((acc, bet) => acc + bet.amount, 0),
+    });
+
     return [...bets]
       .sort((a, b) => b.amount - a.amount) // Sort by amount (highest first)
       .slice(0, 50); // Keep only first 50
@@ -679,7 +687,7 @@ function App() {
     <>
       <div className="game-frame">
         <div className="game-history-container">
-          <BetHistory currentBets={currentBets} />
+          <BetHistory currentBets={currentBets} onlineUsers={onlineUsers} totalBets={totalBets} />
         </div>
 
         <div className="game-area">
@@ -711,7 +719,7 @@ function App() {
                 >
                   <ColorPicker />
                 </Dropdown>
-                <span>{player.nickname}</span>
+                <span>{truncateNickname(player.nickname, 12)}</span>
               </div>
             </div>
 
@@ -847,7 +855,7 @@ function App() {
                         onChange={handleCashOutAmountChange}
                         onFocus={() => setIsCashOutAmountInputFocused(true)}
                         onBlur={() => setIsCashOutAmountInputFocused(false)}
-                        placeholder="Set cash out amount"
+                        placeholder="Set cash out x"
                         disabled={betState.status === "placed" || nextRoundBetState}
                       />
                     </div>

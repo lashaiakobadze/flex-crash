@@ -64,7 +64,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 12px;
+  font-size: 14px;
   color: #9ea0a3;
 }
 
@@ -72,6 +72,7 @@
   display: flex;
   align-items: center;
   gap: 5px;
+  font-weight: 900;
 }
 
 .bets-content {
@@ -85,7 +86,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 12px;
+  font-size: 13px;
   color: #9ea0a3;
 }
 
@@ -93,6 +94,7 @@
   width: 33%;
   display: flex;
   align-items: center;
+  color: rgb(var(--primary));
 }
 
 .bets-content__item__player,
@@ -103,4 +105,47 @@
   align-items: center;
   justify-content: flex-start;
   gap: 5px;
+}
+
+/* // CSS (add to your stylesheet) */
+.top-bets-container {
+  background: rgb(var(--layer2));
+  border-radius: 8px;
+  padding: 16px;
+  margin: 16px 0;
+  color: #9ea0a3;
+}
+
+.bets-table-container {
+  margin-top: 10px;
+  overflow-x: auto;
+}
+
+.bets-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.bets-table th {
+  background: rgb(var(--layer3));
+  padding: 12px;
+  text-align: left;
+}
+
+.bets-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid rgb(var(--layer4));
+}
+
+.bets-table tr:hover {
+  background: rgb(var(--layer5));
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .bets-table th,
+  .bets-table td {
+    padding: 8px;
+    font-size: 14px;
+  }
 }
