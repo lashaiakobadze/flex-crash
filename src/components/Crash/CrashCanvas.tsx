@@ -62,7 +62,7 @@ const CrashCanvas: React.FC<CrashCanvasProps> = ({
       const a = engine.getElapsedPosition(engine.elapsedTime);
       // const b = engine.getElapsedPosition(engine.elapsedTime);
       // ctx.quadraticCurveTo(b.x, b.y, a.x, a.y);
-      ctx.stroke();
+      // ctx.stroke();
 
       if (a.y > 1.5) {
         // Create concave-down curve (frown shape)
@@ -76,7 +76,9 @@ const CrashCanvas: React.FC<CrashCanvasProps> = ({
         ctx.lineTo(a.x, engine.plotHeight); // Maintains constant Y (flat line)
       }
 
-      ctx.stroke();
+      if (gameStatus === GameStatus.PLAYING) {
+        ctx.stroke();
+      }
 
       // Draw caption
       // ctx.font = "bold 50px sans-serif";
