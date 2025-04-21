@@ -112,7 +112,9 @@ const CrashCanvas: React.FC<CrashCanvasProps> = ({
 
       ctx.clearRect(0, 0, engine.graphWidth, engine.graphHeight);
 
-      drawCrashLine(ctx, engine, brandColor, gameStatus);
+      if (gameStatus === GameStatus.PLAYING) {
+        drawCrashLine(ctx, engine, brandColor, gameStatus);
+      }
       // Draw line (same as before)
       // ctx.beginPath();
       // ctx.strokeStyle = brandColor;
