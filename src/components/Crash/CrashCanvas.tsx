@@ -68,7 +68,7 @@ const CrashCanvas: React.FC<CrashCanvasProps> = ({
         // Create concave-down curve (frown shape)
         // Use midpoint for control point but raise it up
         const controlX = (0 + a.x) / 2; // Midpoint between start and end
-        const controlY = engine.plotHeight + 10; // Adjust this value for curve depth
+        const controlY = engine.plotHeight + 5; // Adjust this value for curve depth
 
         ctx.quadraticCurveTo(controlX, controlY, a.x, a.y);
       } else {
