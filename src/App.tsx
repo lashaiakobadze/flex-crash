@@ -606,7 +606,9 @@ function App() {
   const updateWinningBet = (wonBet: Bet) => {
     setCurrentBets((prev) =>
       processBets(
-        prev.map((bet) => (bet.userId === wonBet.userId ? { ...bet, status: "won" } : bet))
+        prev.map((bet) =>
+          bet.userId === wonBet.userId ? { ...bet, status: "won", points: wonBet.points } : bet
+        )
       )
     );
   };
