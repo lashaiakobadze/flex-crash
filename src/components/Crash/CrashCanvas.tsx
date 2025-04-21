@@ -32,6 +32,64 @@ const CrashCanvas: React.FC<CrashCanvasProps> = ({
 
   // console.log("points in childe", points);
 
+  const drawCrashLine = (ctx, engine, brandColor, gameStatus) => {
+    // Clear canvas
+    ctx.clearRect(0, 0, engine.graphWidth, engine.graphHeight);
+
+    // Configure line style with enhanced visuals
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = brandColor;
+    ctx.shadowColor = brandColor;
+    ctx.shadowBlur = 15;
+    ctx.lineJoin = "round";
+    ctx.lineCap = "round";
+
+    // Start drawing path
+    ctx.beginPath();
+    ctx.moveTo(0, engine.plotHeight);
+
+    const a = engine.getElapsedPosition(engine.elapsedTime);
+
+    if (a.y > 1.5) {
+      // Create concave-down curve (frown shape)
+      const controlX = (0 + a.x) / 2;
+      const controlY = engine.plotHeight + 5;
+      ctx.quadraticCurveTo(controlX, controlY, a.x, a.y);
+    } else {
+      // Draw straight horizontal line
+      ctx.lineTo(a.x, engine.plotHeight);
+    }
+
+    // Only stroke if game is playing (your original condition)
+    if (gameStatus === "PLAYING") {
+      ctx.stroke();
+    }
+
+    // Add gradient fill under the line
+    const gradient = ctx.createLinearGradient(0, 0, 0, engine.plotHeight);
+    gradient.addColorStop(0, `${brandColor}40`);
+    gradient.addColorStop(1, `${brandColor}00`);
+
+    ctx.fillStyle = gradient;
+    ctx.lineTo(a.x, engine.plotHeight);
+    ctx.lineTo(0, engine.plotHeight);
+    ctx.fill();
+
+    // Draw subtle highlight line on top
+    ctx.beginPath();
+    ctx.strokeStyle = "#ffffff60";
+    ctx.lineWidth = 1;
+    ctx.moveTo(0, engine.plotHeight);
+
+    if (a.y > 1.5) {
+      const highlightControlY = engine.plotHeight + 3; // Slightly above main curve
+      ctx.quadraticCurveTo((0 + a.x) / 2, highlightControlY, a.x, a.y - 1);
+    } else {
+      ctx.lineTo(a.x, engine.plotHeight - 1);
+    }
+    ctx.stroke();
+  };
+
   React.useEffect(() => {
     setIsMounted(true);
     const canvas = canvasRef.current;
@@ -54,31 +112,32 @@ const CrashCanvas: React.FC<CrashCanvasProps> = ({
 
       ctx.clearRect(0, 0, engine.graphWidth, engine.graphHeight);
 
+      drawCrashLine(ctx, engine, brandColor, gameStatus);
       // Draw line (same as before)
-      ctx.beginPath();
-      ctx.strokeStyle = brandColor;
-      ctx.lineWidth = 2;
-      ctx.moveTo(0, engine.plotHeight);
-      const a = engine.getElapsedPosition(engine.elapsedTime);
-      // const b = engine.getElapsedPosition(engine.elapsedTime);
-      // ctx.quadraticCurveTo(b.x, b.y, a.x, a.y);
-      // ctx.stroke();
+      // ctx.beginPath();
+      // ctx.strokeStyle = brandColor;
+      // ctx.lineWidth = 2;
+      // ctx.moveTo(0, engine.plotHeight);
+      // const a = engine.getElapsedPosition(engine.elapsedTime);
+      // // const b = engine.getElapsedPosition(engine.elapsedTime);
+      // // ctx.quadraticCurveTo(b.x, b.y, a.x, a.y);
+      // // ctx.stroke();
 
-      if (a.y > 1.5) {
-        // Create concave-down curve (frown shape)
-        // Use midpoint for control point but raise it up
-        const controlX = (0 + a.x) / 2; // Midpoint between start and end
-        const controlY = engine.plotHeight + 5; // Adjust this value for curve depth
+      // if (a.y > 1.5) {
+      //   // Create concave-down curve (frown shape)
+      //   // Use midpoint for control point but raise it up
+      //   const controlX = (0 + a.x) / 2; // Midpoint between start and end
+      //   const controlY = engine.plotHeight + 5; // Adjust this value for curve depth
 
-        ctx.quadraticCurveTo(controlX, controlY, a.x, a.y);
-      } else {
-        // Draw straight horizontal line
-        ctx.lineTo(a.x, engine.plotHeight); // Maintains constant Y (flat line)
-      }
+      //   ctx.quadraticCurveTo(controlX, controlY, a.x, a.y);
+      // } else {
+      //   // Draw straight horizontal line
+      //   ctx.lineTo(a.x, engine.plotHeight); // Maintains constant Y (flat line)
+      // }
 
-      if (gameStatus === GameStatus.PLAYING) {
-        ctx.stroke();
-      }
+      // if (gameStatus === GameStatus.PLAYING) {
+      //   ctx.stroke();
+      // }
 
       // Draw caption
       // ctx.font = "bold 50px sans-serif";
