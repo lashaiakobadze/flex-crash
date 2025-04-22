@@ -13,7 +13,7 @@ const ColorContext = createContext<ColorContextType | undefined>(undefined);
 
 export const ColorProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   // Initialize with default colors
-  const [brandColor, setBrandColor] = useState("#f635bf"); // Your current brand color
+  const [brandColor, setBrandColor] = useState("#11e311"); // Your current brand color  // #0fffff"  #f635bf
   const [primaryColor, setPrimaryColor] = useState("#ffffff"); // Default primary color (white)
   const [primaryBgColor, setPrimaryBgColor] = useState("#000000"); // Default primary background color (black)
 
