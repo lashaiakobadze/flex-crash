@@ -283,9 +283,9 @@ function App() {
   const handleWebSocketMessage = (decodedData: WebSocketMessage) => {
     // user info
     if (decodedData["t"] === 1) {
-      const avatarUrl = parseInt(decodedData["a"]);
-      const balance = parseInt(decodedData["b"]);
-      const playerId = parseInt(decodedData["i"]);
+      const avatarUrl = decodedData["a"];
+      const balance = decodedData["b"];
+      const playerId = decodedData["i"];
       const nickname = decodedData["n"];
       const seed = decodedData["s"];
 
@@ -304,11 +304,11 @@ function App() {
 
     // Bet placed (only to user)
     if (decodedData["t"] === 2) {
-      const userId = parseInt(decodedData["u"]);
-      const amount = parseInt(decodedData["a"]);
+      const userId = decodedData["u"];
+      const amount = decodedData["a"];
       const currency = decodedData["c"];
       const balance = decodedData["b"];
-      const roundId = parseInt(decodedData["r"]);
+      const roundId = decodedData["r"];
 
       setBetState({
         status: "placed",
@@ -322,10 +322,10 @@ function App() {
 
     // Bet not placed (only to user)
     if (decodedData["t"] === 4) {
-      const userId = parseInt(decodedData["u"]);
-      const amount = parseInt(decodedData["a"]);
+      const userId = decodedData["u"];
+      const amount = decodedData["a"];
       const currency = decodedData["c"];
-      let roundId = parseInt(decodedData["r"]);
+      let roundId = decodedData["r"];
       let balance = decodedData["b"];
       let errorCode = decodedData["e"]; // handle errors from here
 
@@ -336,9 +336,9 @@ function App() {
     // Bet placed (broadcast to all)
     if (decodedData["t"] === 8) {
       const newBet: Bet = {
-        userId: parseInt(decodedData["u"]),
+        userId: decodedData["u"],
         nickname: decodedData["n"],
-        amount: parseInt(decodedData["a"]),
+        amount: decodedData["a"],
         currency: decodedData["c"],
         status: "placed",
         time: Date.now(),
@@ -361,9 +361,9 @@ function App() {
     // Player won (broadcast to all)
     if (decodedData["t"] === 10) {
       const wonBet: Bet = {
-        userId: parseInt(decodedData["u"]),
+        userId: decodedData["u"],
         nickname: decodedData["n"],
-        amount: parseInt(decodedData["a"]),
+        amount: decodedData["a"],
         currency: decodedData["c"],
         points: parseFloat(decodedData["p"]),
         status: "won",
@@ -399,8 +399,8 @@ function App() {
 
     // Betting round starts
     if (decodedData["t"] === 18) {
-      const roundId = parseInt(decodedData["r"]);
-      const secondBeforeStart = parseInt(decodedData["s"]);
+      const roundId = decodedData["r"];
+      const secondBeforeStart = decodedData["s"];
 
       setCurrentBets([]);
       setTotalBets({ count: 0, totalBetAmount: 0 });
@@ -425,7 +425,7 @@ function App() {
       //   setBetState(() => ({ status: "placed", roundId, bet: betState.bet }));
       // }
 
-      const roundId = parseInt(decodedData["r"]);
+      const roundId = decodedData["r"];
       setGameProgress(roundId, GameStatus.END_BETTING_ROUND);
       setShowCountdown(false);
 
@@ -436,7 +436,7 @@ function App() {
 
     // New round created
     if (decodedData["t"] === 20) {
-      const roundId = parseInt(decodedData["r"]);
+      const roundId = decodedData["r"];
       const hash = decodedData["h"];
       setRoundIdAndRef(roundId);
 
@@ -446,9 +446,9 @@ function App() {
 
     // Rocket flying (broadcast to all)
     if (decodedData["t"] === 22) {
-      const roundId = parseInt(decodedData["r"]);
+      const roundId = decodedData["r"];
       const points = parseFloat(decodedData["p"]);
-      const time = parseInt(decodedData["e"]);
+      const time = decodedData["e"];
 
       setPoints(points);
       setTime(time);
@@ -465,7 +465,7 @@ function App() {
     // Rocket exploded (broadcast to all)
     if (decodedData["t"] === 24) {
       const finishedRound: Round = {
-        r: parseInt(decodedData["r"]),
+        r: decodedData["r"],
         p: decodedData["p"].toString(),
         s: RoundStatus.FINISHED,
       };
@@ -482,7 +482,7 @@ function App() {
 
     // Online users count (broadcast to all)
     if (decodedData["t"] === 26) {
-      const onlineUsers = parseInt(decodedData["o"]);
+      const onlineUsers = decodedData["o"];
       setOnlineUsers(onlineUsers);
 
       console.log("26", { onlineUsers }, decodedData);
@@ -491,11 +491,11 @@ function App() {
 
     // Bet round timer (broadcast to all)
     if (decodedData["t"] === 28) {
-      const roundId = parseInt(decodedData["r"]);
-      const secondBeforeStart = parseInt(decodedData["w"]); // fix secondBeforeStart are send only
+      const roundId = decodedData["r"];
+      const secondBeforeStart = decodedData["w"]; // fix secondBeforeStart are send only
 
       setWinState({ status: "", data: new Win(0, "", "", 0, 0, 0) });
-      console.log("Round id with timer", parseInt(decodedData["r"]));
+      console.log("Round id with timer", decodedData["r"]);
 
       if (!countdown) {
         console.log("Bet round timer", secondBeforeStart);
@@ -517,9 +517,9 @@ function App() {
 
     // ფსონი თუ არ დაიდება (მხოლოდ იუზერს ეგზავნება)
     if (decodedData["t"] === 4) {
-      let roundId = parseInt(decodedData["r"]);
-      let userId = parseInt(decodedData["u"]);
-      let amount = parseInt(decodedData["a"]);
+      let roundId = decodedData["r"];
+      let userId = decodedData["u"];
+      let amount = decodedData["a"];
       let currency = decodedData["c"];
       let balance = decodedData["b"];
       let errorCode = decodedData["e"];
