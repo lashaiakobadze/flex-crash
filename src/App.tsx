@@ -92,11 +92,18 @@ function App() {
   const [currentBets, setCurrentBets] = useState<Bet[]>([]);
   const [totalBets, setTotalBets] = useState<{ count: number; totalBetAmount: number }>();
 
+  // Frontend simulation
+  const [isSimulating, setIsSimulating] = useState<boolean>(true);
+  const simRafRef = useRef<number | null>(null);
+  const simStartTimeRef = useRef<number>(0);
+  const simCrashPointRef = useRef<number>(0);
+  const simRoundIdRef = useRef<number>(0);
+
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") {
-        // Tab regained focus - check connection
-        if (!wsRef.current || wsRef.current.readyState === WebSocket.CLOSED) {
+        // Tab regained focus - check connection (skip during simulation)
+        if (!isSimulating && (!wsRef.current || wsRef.current.readyState === WebSocket.CLOSED)) {
           connectWebSocket();
         }
       }
@@ -106,7 +113,7 @@ function App() {
     return () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
-  }, []);
+  }, [isSimulating]);
 
   useEffect(() => {
     if (countdown <= 0) return;
@@ -667,7 +674,9 @@ function App() {
 
   // Setup and cleanup
   useEffect(() => {
-    connectWebSocket();
+    if (!isSimulating) {
+      connectWebSocket();
+    }
 
     return () => {
       // Cleanup on component unmount
@@ -680,12 +689,123 @@ function App() {
       if (reconnectAttemptRef.current) {
         clearTimeout(reconnectAttemptRef.current);
       }
+      if (simRafRef.current) {
+        cancelAnimationFrame(simRafRef.current);
+      }
     };
-  }, []);
+  }, [isSimulating]);
 
   // const handleTabChange = (option: GameOptions) => {
   //   setGameMode(option);
   // };
+
+  // ----- Frontend Simulation (no backend) -----
+  const simGenerateCrashPoint = () => {
+    const r = Math.random();
+    if (r < 0.5) return 1 + Math.random() * 2; // 1.00 - 3.00
+    if (r < 0.8) return 1 + Math.random() * 10; // 1.00 - 11.00
+    if (r < 0.95) return 1 + Math.random() * 25; // 1.00 - 26.00
+    return 1 + Math.random() * 50; // 1.00 - 51.00
+  };
+
+  const simStartPlaying = () => {
+    // Start PLAYING state
+    setGameStatus(GameStatus.PLAYING);
+    simStartTimeRef.current = Date.now();
+    simCrashPointRef.current = simGenerateCrashPoint();
+
+    const tick = () => {
+      const elapsed = Date.now() - simStartTimeRef.current;
+      const currentMultiplier = Math.pow(Math.E, 0.00006 * elapsed);
+      setPoints(currentMultiplier);
+
+      if (currentMultiplier >= simCrashPointRef.current) {
+        // Round finished
+        const finished: Round = {
+          r: simRoundIdRef.current,
+          p: simCrashPointRef.current.toFixed(2),
+          s: RoundStatus.FINISHED,
+        };
+        handleRoundData([finished]);
+
+        setGameStatus(GameStatus.CANCELLED);
+        setPoints(0);
+
+        // Pause 3s, then start betting again
+        setTimeout(simStartBettingRound, 3000);
+        return;
+      }
+
+      simRafRef.current = requestAnimationFrame(tick);
+    };
+
+    tick();
+  };
+
+  const simStartBettingRound = () => {
+    // New round id
+    simRoundIdRef.current = Date.now();
+
+    // Reset bets and totals
+    setCurrentBets([]);
+    setTotalBets({ count: 0, totalBetAmount: 0 });
+
+    // Update UI state
+    setGameStatus(GameStatus.BETTING_ROUND);
+    setShowCountdown(true);
+    setOnlineUsers(Math.floor(Math.random() * 50) + 10);
+
+    // 5s countdown, then PLAYING
+    setCountdown(5000);
+    setTimeout(() => {
+      setShowCountdown(false);
+      simStartPlaying();
+    }, 5000);
+
+    // Simulate a few incoming bets
+    const sample = [
+      {
+        userId: 101,
+        nickname: "Alice",
+        amount: 10,
+        currency: "USD",
+        status: "placed",
+        time: Date.now(),
+        roundId: simRoundIdRef.current,
+      },
+      {
+        userId: 102,
+        nickname: "Bob",
+        amount: 25,
+        currency: "USD",
+        status: "placed",
+        time: Date.now() + 800,
+        roundId: simRoundIdRef.current,
+      },
+      {
+        userId: 103,
+        nickname: "Eve",
+        amount: 50,
+        currency: "USD",
+        status: "placed",
+        time: Date.now() + 1600,
+        roundId: simRoundIdRef.current,
+      },
+    ] as Bet[];
+
+    sample.forEach((bet, idx) => {
+      setTimeout(() => addNewBet(bet), idx * 900);
+    });
+  };
+
+  // Boot simulation
+  useEffect(() => {
+    if (!isSimulating) return;
+    simStartBettingRound();
+    return () => {
+      if (simRafRef.current) cancelAnimationFrame(simRafRef.current);
+    };
+  }, [isSimulating]);
 
   return (
     <>
@@ -706,6 +826,22 @@ function App() {
                 </div>
                 <div className="game-stats__item">
                   <NetworkStatus latency={latency} />
+                </div>
+                <div className="game-stats__item">
+                  <button
+                    onClick={() => setIsSimulating((v) => !v)}
+                    style={{
+                      padding: "4px 8px",
+                      fontSize: "12px",
+                      backgroundColor: isSimulating ? "#22c55e" : "#ef4444",
+                      color: "white",
+                      border: "none",
+                      borderRadius: "4px",
+                      cursor: "pointer",
+                    }}
+                  >
+                    {isSimulating ? "SIM ON" : "SIM OFF"}
+                  </button>
                 </div>
               </div>
 

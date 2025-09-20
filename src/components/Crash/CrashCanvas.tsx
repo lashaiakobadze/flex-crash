@@ -32,7 +32,40 @@ const CrashCanvas: React.FC<CrashCanvasProps> = ({
 
   // console.log("points in childe", points);
 
-  const drawCrashLine = (ctx, engine, brandColor, gameStatus) => {
+  const drawArrowHead = (
+    ctx: CanvasRenderingContext2D,
+    fromX: number,
+    fromY: number,
+    toX: number,
+    toY: number,
+    color: string,
+    size: number = 10
+  ) => {
+    const angle = Math.atan2(toY - fromY, toX - fromX);
+    ctx.save();
+    ctx.translate(toX, toY);
+    ctx.rotate(angle);
+
+    // Match glow with main line
+    ctx.fillStyle = color;
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 12;
+
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(-size, size * 0.6);
+    ctx.lineTo(-size, -size * 0.6);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  };
+
+  const drawCrashLine = (
+    ctx: CanvasRenderingContext2D,
+    engine: CrashEngine,
+    brandColor: string,
+    gameStatus: GameStatus
+  ) => {
     // Clear canvas
     ctx.clearRect(0, 0, engine.graphWidth, engine.graphHeight);
 
@@ -50,18 +83,36 @@ const CrashCanvas: React.FC<CrashCanvasProps> = ({
 
     const a = engine.getElapsedPosition(engine.elapsedTime);
 
+    // Prepare end and direction for arrow head
+    let endX = a.x;
+    let endY = a.y;
+    let dirFromX = 0;
+    let dirFromY = engine.plotHeight;
+
     if (a.y > 1.5) {
       // Create concave-down curve (frown shape)
       const controlX = (0 + a.x) / 2;
       const controlY = engine.plotHeight + 5;
       ctx.quadraticCurveTo(controlX, controlY, a.x, a.y);
+
+      // Arrow direction follows curve tangent at end: end - control
+      endX = a.x;
+      endY = a.y;
+      dirFromX = controlX;
+      dirFromY = controlY;
     } else {
       // Draw straight horizontal line
       ctx.lineTo(a.x, engine.plotHeight);
+
+      // Arrow direction is horizontal to the right
+      endX = a.x;
+      endY = engine.plotHeight;
+      dirFromX = a.x - 12;
+      dirFromY = engine.plotHeight;
     }
 
-    // Only stroke if game is playing (your original condition)
-    if (gameStatus === "PLAYING") {
+    // Only stroke if game is playing
+    if (gameStatus === GameStatus.PLAYING) {
       ctx.stroke();
     }
 
@@ -71,7 +122,7 @@ const CrashCanvas: React.FC<CrashCanvasProps> = ({
     gradient.addColorStop(1, `${brandColor}00`);
 
     ctx.fillStyle = gradient;
-    ctx.lineTo(a.x, engine.plotHeight);
+    ctx.lineTo(endX, engine.plotHeight);
     ctx.lineTo(0, engine.plotHeight);
     ctx.fill();
 
@@ -88,6 +139,9 @@ const CrashCanvas: React.FC<CrashCanvasProps> = ({
       ctx.lineTo(a.x, engine.plotHeight - 1);
     }
     ctx.stroke();
+
+    // Draw arrow head at the end of the line
+    drawArrowHead(ctx, dirFromX, dirFromY, endX, endY, brandColor, 11);
   };
 
   React.useEffect(() => {
